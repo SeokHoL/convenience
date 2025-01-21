@@ -1,98 +1,147 @@
-<!-- 검색 폼 부분 수정 -->
-<form th:action="@{/search}" method="get" class="mb-4">
-    <div class="row g-3">
-        <div class="col-md-4">
-            <label for="loginId" class="form-label">아이디</label>
-            <input type="text" id="loginId" name="loginId" class="form-control" placeholder="아이디">
-        </div>
-        <div class="col-md-4">
-            <label for="username" class="form-label">사용자 이름</label>
-            <input type="text" id="username" name="username" class="form-control" placeholder="사용자 이름">
-        </div>
-        <div class="col-md-4">
-            <label for="branch" class="form-label">지점</label>
-            <select id="branch" name="branch" class="form-control">
-                <option value="">선택하세요</option>
-                <option value="본사">본사</option>
-                <option value="안양">안양</option>
-                <option value="청주">청주</option>
-            </select>
-        </div>
-    </div>
-    <div class="mt-3">
-        <button type="submit" class="btn btn-primary">조회</button>
-    </div>
-</form>
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>사용자 정보 관리</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            padding: 20px;
+        }
 
-<!-- 결과 테이블 수정 -->
-<table class="table table-bordered table-hover mt-3" th:if="${users != null and not #lists.isEmpty(users)}">
-    <thead class="table-primary">
-    <tr>
-        <th>선택</th>
-        <th>아이디</th>
-        <th>사용자 이름</th>
-        <th>권한 그룹</th>
-        <th>지점</th>
-        <th>Email</th>
-        <th>핸드폰 번호</th>
-        <th>입사일자</th>
-        <th>퇴사일자</th>
-        <th>로그인실패횟수</th>
-        <th>수정일시</th>
-        <th>수정자</th>
-    </tr>
-    </thead>
-    <tbody>
-    <tr th:each="user : ${users}">
-        <td><input type="checkbox" name="selectedUsers" th:value="${user.userId}"></td>
-        <td th:text="${user.loginId}"></td>
-        <td th:text="${user.username}"></td>
-        <td th:text="${user.role}"></td>
-        <td th:text="${user.branch}"></td>
-        <td th:text="${user.email}"></td>
-        <td th:text="${user.phoneNumber}"></td>
-        <td th:text="${user.joinDate}"></td>
-        <td th:text="${user.leaveDate}"></td>
-        <td th:text="${user.loginFailCount}"></td>
-        <td th:text="${user.modifiedAt}"></td>
-        <td th:text="${user.modifiedBy}"></td>
-    </tr>
-    </tbody>
-</table>
+        .form-container {
+            background-color: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            margin-bottom: 30px;
+        }
 
-<!-- 수정 모달 수정 -->
-<div class="modal fade" id="editModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">사용자 정보 수정</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        .table-container {
+            background-color: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+        }
+
+        .table thead {
+            background-color: #007bff;
+            color: #ffffff;
+        }
+
+        .modal-header {
+            background-color: #007bff;
+            color: white;
+        }
+
+        .modal-footer {
+            justify-content: flex-end;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="form-container">
+        <h3 class="mb-4">사용자 검색</h3>
+        <form th:action="@{/search}" method="get">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <label for="loginId" class="form-label">아이디</label>
+                    <input type="text" id="loginId" name="loginId" class="form-control" placeholder="아이디">
+                </div>
+                <div class="col-md-4">
+                    <label for="username" class="form-label">사용자 이름</label>
+                    <input type="text" id="username" name="username" class="form-control" placeholder="사용자 이름">
+                </div>
+                <div class="col-md-4">
+                    <label for="branch" class="form-label">지점</label>
+                    <select id="branch" name="branch" class="form-control">
+                        <option value="">선택하세요</option>
+                        <option value="본사">본사</option>
+                        <option value="안양">안양</option>
+                        <option value="청주">청주</option>
+                    </select>
+                </div>
             </div>
-            <form action="/update" method="post">
-                <div class="modal-body">
-                    <input type="hidden" id="modalUserId" name="userId">
+            <div class="mt-4 text-end">
+                <button type="submit" class="btn btn-primary">조회</button>
+            </div>
+        </form>
+    </div>
 
-                    <div class="mb-3">
-                        <label for="modalLoginId" class="form-label">아이디</label>
-                        <input type="text" class="form-control" id="modalLoginId" name="loginId" readonly>
-                    </div>
+    <div class="table-container">
+        <h3 class="mb-4">검색 결과</h3>
+        <table class="table table-bordered table-hover">
+            <thead>
+            <tr>
+                <th>선택</th>
+                <th>아이디</th>
+                <th>사용자 이름</th>
+                <th>권한 그룹</th>
+                <th>지점</th>
+                <th>Email</th>
+                <th>핸드폰 번호</th>
+                <th>입사일자</th>
+                <th>퇴사일자</th>
+                <th>로그인 실패 횟수</th>
+                <th>수정일시</th>
+                <th>수정자</th>
+            </tr>
+            </thead>
+            <tbody th:if="${users != null and not #lists.isEmpty(users)}" th:each="user : ${users}">
+            <tr>
+                <td><input type="checkbox" name="selectedUsers" th:value="${user.userId}"></td>
+                <td th:text="${user.loginId}"></td>
+                <td th:text="${user.username}"></td>
+                <td th:text="${user.role}"></td>
+                <td th:text="${user.branch}"></td>
+                <td th:text="${user.email}"></td>
+                <td th:text="${user.phoneNumber}"></td>
+                <td th:text="${user.joinDate}"></td>
+                <td th:text="${user.leaveDate}"></td>
+                <td th:text="${user.loginFailCount}"></td>
+                <td th:text="${user.modifiedAt}"></td>
+                <td th:text="${user.modifiedBy}"></td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
 
-                    <div class="mb-3">
-                        <label for="modalUsername" class="form-label">이름</label>
-                        <input type="text" class="form-control" id="modalUsername" name="username" required>
-                    </div>
-
-                    <!-- 나머지 필드들은 동일 -->
+    <div class="modal fade" id="editModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">사용자 정보 수정</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
-                    <button type="submit" class="btn btn-primary">저장</button>
-                </div>
-            </form>
+                <form action="/update" method="post">
+                    <div class="modal-body">
+                        <input type="hidden" id="modalUserId" name="userId">
+
+                        <div class="mb-3">
+                            <label for="modalLoginId" class="form-label">아이디</label>
+                            <input type="text" class="form-control" id="modalLoginId" name="loginId" readonly>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="modalUsername" class="form-label">이름</label>
+                            <input type="text" class="form-control" id="modalUsername" name="username" required>
+                        </div>
+
+                        <!-- 나머지 필드 추가 -->
+
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
+                        <button type="submit" class="btn btn-primary">저장</button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 </div>
-
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
 <script>
     function editSelected() {
         const checkboxes = document.querySelectorAll('input[name="selectedUsers"]:checked');
@@ -109,7 +158,6 @@
 
         const userId = checkboxes[0].value;
 
-        // 선택된 행에서 직접 데이터를 가져옴
         const selectedRow = checkboxes[0].closest('tr');
         const user = {
             userId: userId,
@@ -123,7 +171,6 @@
             leaveDate: selectedRow.cells[8].textContent
         };
 
-        // 모달에 데이터 설정
         document.getElementById('modalUserId').value = user.userId;
         document.getElementById('modalLoginId').value = user.loginId;
         document.getElementById('modalUsername').value = user.username;
@@ -138,3 +185,5 @@
         modal.show();
     }
 </script>
+</body>
+</html>

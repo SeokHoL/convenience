@@ -66,12 +66,12 @@ public class UserController {
     @PostMapping("/delete")
     public String deleteUsers(@RequestParam List<Long> loginIds) {
         userService.deleteUsers(loginIds);
-        return "redirect:/user/search";
+        return "redirect:/search";
     }
 
     @PostMapping("/update")
     public String updateUser(@ModelAttribute UsersDto userDto) {
         userService.updateUser(userDto);
-        return "redirect:/user/search";
+        return "redirect:/search";
     }
 }

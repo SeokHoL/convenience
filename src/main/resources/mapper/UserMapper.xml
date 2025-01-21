@@ -42,6 +42,11 @@
         SELECT * FROM users WHERE phone_number = #{phoneNumber}
     </select>
 
-
+    <select id="searchUsers" resultType="com.saehimit.convenienco.dto.UsersDto">
+        SELECT * FROM users
+        WHERE login_id LIKE CONCAT('%', #{loginId}, '%')
+          AND username LIKE CONCAT('%', #{username}, '%')
+          AND (branch = #{branch} OR #{branch} IS NULL OR #{branch} = '')
+    </select>
 
 </mapper>
