@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.saehimit.convenienco.mapper.UserMapper">
+
+    <!-- 관리자 계정 생성 -->
+    <insert id="createAdmin">
+        INSERT INTO users (login_id, password, role)
+        VALUES (#{loginId}, #{password}, #{role})
+    </insert>
+    <select id="findByLoginId" parameterType="string" resultType="com.saehimit.convenienco.dto.UsersDto">
+        SELECT * FROM users WHERE login_id = #{loginId}
+    </select>
+
+
+
+</mapper>

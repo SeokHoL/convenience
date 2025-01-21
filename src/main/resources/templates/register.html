@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>사용자 정보 등록</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css">
+    <style>
+        <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f9f9f9;
+        }
+
+        .error-message {
+            color: red;
+            font-size: 0.9rem;
+            margin-top: 5px;
+            display: none;
+        }
+
+        .top-bar {
+            background-color: #007bff;
+            color: white;
+            padding: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+
+        .form-container {
+            width: 100%;
+            max-width: 1200px; /* 최대 폭 확대 */
+            margin: 30px auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .form-row {
+            display: flex;
+            flex-wrap: wrap; /* 두 줄 이상 가능하게 설정 */
+            gap: 20px; /* 항목 간격 */
+        }
+
+        .form-group {
+            flex: 1 1 calc(50% - 20px); /* 가로 50%씩 배치 */
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group label {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .form-group input,
+        .form-group select {
+            height: 40px;
+            padding: 5px 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        @media (max-width: 768px) {
+            .form-group {
+                flex: 1 1 100%; /* 작은 화면에서는 한 줄에 하나씩 배치 */
+            }
+        }
+    </style>
+
+    </style>
+    <script>
+        // 비밀번호와 확인 비밀번호 실시간 검증
+        function validatePassword() {
+            const password = document.getElementById("password").value;
+            const confirmPassword = document.getElementById("confirmPassword").value;
+            const errorMessage = document.getElementById("passwordError");
+
+            if (password !== confirmPassword) {
+                errorMessage.style.display = "block"; // 에러 메시지 표시
+            } else {
+                errorMessage.style.display = "none"; // 에러 메시지 숨김
+            }
+        }
+
+        // 폼 제출 시 검증
+        function validateForm(event) {
+            const password = document.getElementById("password").value;
+            const confirmPassword = document.getElementById("confirmPassword").value;
+
+            if (password !==
+                confirmPassword) {
+                alert("비밀번호와 비밀번호 확인이 일치하지 않습니다.");
+                event.preventDefault(); // 폼 제출 중단
+                return false;
+            }
+            return true;
+        }
+
+        //이메일중복확인
+        function validateEmail() {
+            const email = document.getElementById("email").value;
+            const emailError = document.getElementById("emailError");
+
+            fetch(`/check/email?email=${encodeURIComponent(email)}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.exists) {
+                        // 이메일 중복 시 에러 메시지 표시
+                        emailError.style.display = "block";
+                    } else {
+                        // 이메일 사용 가능 시 에러 메시지 숨김
+                        emailError.style.display = "none";
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+        }
+
+
+        function validatePhoneNumberAndCheckDuplicate() {
+            const phoneInput = document.getElementById("phoneNumber");
+            const errorDiv = document.getElementById("phoneNumberError");
+            const phoneError = document.getElementById("phoneError");
+
+            // 숫자가 아닌 값을 입력했는지 확인
+            if (/[^0-9]/.test(phoneInput.value)) {
+                errorDiv.style.display = "block"; // 숫자 에러 메시지 표시
+                phoneInput.value = phoneInput.value.replace(/[^0-9]/g, ''); // 숫자 외의 문자 제거
+            } else {
+                errorDiv.style.display = "none"; // 숫자 에러 메시지 숨김
+            }
+
+            // 핸드폰 번호 중복 확인
+            fetch(`/check/phone?phoneNumber=${phoneInput.value}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.exists) {
+                        phoneError.style.display = "block"; // 중복 에러 메시지 표시
+                        phoneError.textContent = "이미 사용 중인 핸드폰 번호입니다.";
+                    } else {
+                        phoneError.style.display = "none"; // 중복 에러 메시지 숨김
+                    }
+                })
+                .catch(error => {
+                    console.error("Error:", error);
+                });
+        }
+
+
+        //아이디 중복확인
+
+        function validateUserId() {
+            const userId = document.getElementById("userId").value;
+            const userIdError = document.getElementById("userIdError");
+
+            fetch(`/check/userId?userId=${userId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.exists) {
+                        userIdError.style.display = "block";
+                        userIdError.textContent = "이미 사용 중인 아이디입니다.";
+                    } else {
+                        userIdError.style.display = "none";
+                    }
+                });
+        }
+
+
+
+    </script>
+</head>
+<body>
+<div class="top-bar">
+    <span>사용자 관리</span>
+    <div>
+        <a href="/main" class="text-white text-decoration-none me-3">홈</a>
+        <a href="/logout" class="text-white text-decoration-none">로그아웃</a>
+    </div>
+</div>
+
+<!--<div class="sidebar">-->
+<!--    <a href="/register">사용자 정보 등록</a>-->
+<!--    <a href="/user/search">사용자 정보 수정</a>-->
+<!--</div>-->
+
+<div class="form-container">
+    <h4 class="mb-4">사용자 정보 입력</h4>
+    <form method="post" action="/register" onsubmit="return validateForm(event)">
+        <div class="form-row">
+            <div class="form-group">
+                <label for="userId" class="form-label">아이디</label>
+                <input type="text" class="form-control" id="userId" name="userId" required oninput="validateUserId()">
+                <div id="userIdError" class="error-message">이미 사용 중인 아이디입니다.</div>
+            </div>
+
+            <div class="form-group">
+                <label for="username" class="form-label">이름</label>
+                <input type="text" class="form-control" id="username" name="username" required>
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label for="password" class="form-label">비밀번호</label>
+                <input type="password" class="form-control" id="password" name="password" required
+                       oninput="validatePassword()">
+            </div>
+            <div class="form-group">
+                <label for="confirmPassword" class="form-label">비밀번호 확인</label>
+                <input type="password" class="form-control" id="confirmPassword" name="confirmPassword" required
+                       oninput="validatePassword()">
+                <div id="passwordError" class="error-message">비밀번호가 일치하지 않습니다.</div>
+            </div>
+        </div>
+        <div class="form-row">
+        <div class="form-group">
+                <label for="branch" class="form-label">지점</label>
+                <select class="form-select" id="branch" name="branch">
+                    <option value="">선택하세요</option>
+                    <option value="본사">본사</option>
+                    <option value="안양">안양</option>
+                    <option value="청주">청주</option>
+                </select>
+            </div>
+            <div class="form-group mb-3">
+                <label for="role" class="form-label">역할</label>
+                <select class="form-select" id="role" name="role" required>
+                    <option value="ROLE_ADMIN">관리자</option>
+                    <option value="ROLE_USER">점주</option>
+                    <option value="ROLE_MANAGER">알바</option>
+                </select>
+            </div>
+        </div>
+        <div class="form-group">
+            <label for="email" class="form-label">Email</label>
+            <input type="email" class="form-control" id="email" name="email" required oninput="validateEmail()">
+            <div id="emailError" class="error-message">이미 사용 중인 이메일입니다.</div>
+        </div>
+
+
+
+        <div class="form-group">
+            <label for="phoneNumber" class="form-label">핸드폰 번호</label>
+            <input type="text" class="form-control" id="phoneNumber" name="phoneNumber" required
+                   oninput="validatePhoneNumberAndCheckDuplicate()">
+            <div id="phoneNumberError" class="error-message">
+                숫자만 입력 가능합니다.
+            </div>
+            <div id="phoneError" class="error-message">
+                이미 사용 중인 핸드폰 번호입니다.
+            </div>
+        </div>
+
+        <div class="form-row">
+<!--            <div class="form-group">-->
+<!--                <label for="role" class="form-label">권한 그룹</label>-->
+<!--                <select class="form-select" id="role" name="role" multiple size="6"> &lt;!&ndash; multiple과 size 속성 추가 &ndash;&gt;-->
+<!--                    <option value="입고관리">입고관리</option>-->
+<!--                    <option value="출고관리">출고관리</option>-->
+<!--                    <option value="물류현황관리">물류현황관리</option>-->
+<!--                    <option value="기준정보관리">기준정보관리</option>-->
+<!--                    <option value="시스템관리">시스템관리</option>-->
+<!--                    <option value="사용자관리">사용자관리</option>-->
+<!--                </select>-->
+<!--            </div>-->
+
+            <div class="form-group">
+                <label for="joinDate" class="form-label">입사일자</label>
+                <input type="date" class="form-control" id="joinDate" name="joinDate">
+            </div>
+        </div>
+
+        <div class="d-flex justify-content-between mt-4">
+            <button type="submit" class="btn btn-primary">등록</button>
+            <button type="reset" class="btn btn-secondary">취소</button>
+        </div>
+    </form>
+
+
+</div>
+</body>
+</html>
