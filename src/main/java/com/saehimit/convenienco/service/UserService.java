@@ -73,7 +73,8 @@ public class UserService {
         userMapper.deleteUsers(loginIds);
     }
 
-    public void updateUser(UsersDto userDto) {
+    public void updateUser(UsersDto userDto, String modifier) {
+        userDto.setModifiedBy(modifier); // 수정자 설정
         userMapper.updateUser(userDto);
     }
 }

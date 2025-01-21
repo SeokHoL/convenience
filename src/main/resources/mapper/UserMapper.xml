@@ -14,13 +14,16 @@
     <select id="findByLoginId" parameterType="string" resultType="com.saehimit.convenienco.dto.UsersDto">
         SELECT * FROM users WHERE login_id = #{loginId}
     </select>
-        <!-- 관리자 계정  -->
-        <insert id="saveUser" parameterType="com.saehimit.convenienco.dto.UsersDto">
-            INSERT INTO users (login_id, password, email, phone_number, role)
-            VALUES (#{loginId}, #{password}, #{email}, #{phoneNumber}, #{role})
-        </insert>
 
-        <!-- 사용자 등록 -->
+    <insert id="saveUser" parameterType="com.saehimit.convenienco.dto.UsersDto">
+        INSERT INTO users (
+            login_id, password, username, email, phone_number, branch, role, join_date
+        ) VALUES (
+                     #{loginId}, #{password}, #{username}, #{email}, #{phoneNumber}, #{branch}, #{role}, #{joinDate}
+                 )
+    </insert>
+
+    <!-- 사용자 등록 -->
 
         <insert id="insertUser" parameterType="com.saehimit.convenienco.dto.UsersDto">
             INSERT INTO users (user_id, username, password, email, phone_number, branch, role, join_date)
@@ -48,5 +51,30 @@
           AND username LIKE CONCAT('%', #{username}, '%')
           AND (branch = #{branch} OR #{branch} IS NULL OR #{branch} = '')
     </select>
+
+    <!-- 사용자 정보 업데이트 -->
+    <update id="updateUser" parameterType="com.saehimit.convenienco.dto.UsersDto">
+        UPDATE users
+        SET username = #{username},
+        email = #{email},
+        phone_number = #{phoneNumber},
+        branch = #{branch},
+        role = #{role},
+        join_date = #{joinDate},
+        leave_date = #{leaveDate},
+        login_fail_count = #{loginFailCount},
+        modified_at = NOW(),
+        modified_by = #{modifiedBy} <!-- 수정자 -->
+        WHERE user_id = #{userId}
+    </update>
+
+    <delete id="deleteUsers" parameterType="list">
+        DELETE FROM users
+        WHERE user_id IN
+        <foreach collection="loginIds" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
 
 </mapper>

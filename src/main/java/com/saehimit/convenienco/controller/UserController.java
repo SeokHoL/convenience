@@ -7,6 +7,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
+import java.security.Principal;
 import java.util.List;
 
 @Controller
@@ -70,8 +71,15 @@ public class UserController {
     }
 
     @PostMapping("/update")
-    public String updateUser(@ModelAttribute UsersDto userDto) {
-        userService.updateUser(userDto);
+    public String updateUser(@ModelAttribute UsersDto userDto, Principal principal) {
+        String modifier = principal.getName(); // 로그인한 사용자의 아이디 가져오기
+        userService.updateUser(userDto, modifier); // 수정자 정보 포함하여 업데이트
         return "redirect:/search";
     }
-}
+
+
+    }
+
+
+
+

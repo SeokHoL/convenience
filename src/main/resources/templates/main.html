@@ -128,6 +128,24 @@
             const submenu = document.getElementById(menuId);
             submenu.style.display = submenu.style.display === "block" ? "none" : "block";
         }
+        function checkAccessAndRedirect(url) {
+            fetch(url, {
+                method: 'GET',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            }).then(response => {
+                if (response.ok) {
+                    location.href = url; // 접근 가능 시 URL로 이동
+                } else if (response.status === 403) {
+                    const alertBox = document.getElementById("alertBox");
+                    alertBox.style.display = "block";
+                    setTimeout(() => {
+                        alertBox.style.display = "none";
+                    }, 3000); // 3초 후 자동 닫힘
+                }
+            }).catch(error => console.error('Error:', error));
+        }
     </script>
 </head>
 <body>
@@ -159,8 +177,8 @@
         <button class="btn btn-primary">시스템관리</button>
         <button class="btn btn-primary" onclick="toggleSubmenu('userManagementMenu')">사용자 관리</button>
         <div id="userManagementMenu" class="submenu">
-            <button class="btn btn-link" onclick="location.href='/register'">사용자 정보 등록</button>
-            <button class="btn btn-link" onclick="location.href='/search'">사용자 정보 관리</button>
+            <button class="btn btn-link" onclick="checkAccessAndRedirect('/register')">사용자 정보 등록</button>
+            <button class="btn btn-link" onclick="checkAccessAndRedirect('/search')">사용자 정보 관리</button>
         </div>
     </div>
 
