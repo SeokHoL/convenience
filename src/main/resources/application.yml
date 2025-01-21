@@ -23,7 +23,7 @@ spring:
 # mybatis
 mybatis:
   mapper-locations: classpath:mapper/*.xml
-  type-aliases-package: com.saehimit.conveniencestore.dto
+  type-aliases-package: com.saehimit.convenienco.dto
   config-location: classpath:mybatis-config.xml
 
 

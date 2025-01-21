@@ -16,14 +16,15 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
+                .csrf().disable() // CSRF 보호 비활성화
                 .authorizeHttpRequests((requests) -> requests
-                        .requestMatchers("/login", "/resources/**").permitAll()
+                        .requestMatchers("/login", "/register", "/resources/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .formLogin((form) -> form
                         .loginPage("/login")
                         .defaultSuccessUrl("/main")
-                        .failureUrl("/login?error") // 실패 시 ?error 추가
+                        .failureUrl("/login?error")
                         .permitAll()
                 )
                 .logout((logout) -> logout
@@ -32,6 +33,7 @@ public class SecurityConfig {
                 );
         return http.build();
     }
+
 
     //메모리에 사용자 정보를 저장하는 UserDetailsManager 구현체입니다.
     //사용자가 로그인 시 입력한 정보와 메모리에 저장된 사용자 정보를 비교해 인증 여부를 결정합니다.
