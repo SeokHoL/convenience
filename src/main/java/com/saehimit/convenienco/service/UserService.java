@@ -22,13 +22,13 @@ public class UserService {
 
     public void initializeAdmin() {
         // Admin 계정 존재 여부 확인
-        if (userMapper.findByLoginId("admin") == null) { // findByLoginId 메서드 추가 필요
+        if (userMapper.findByLoginId("admin") == null) { // findByLoginId 메서드는 UserMapper에 정의되어야 함
             UsersDto admin = UsersDto.builder()
                     .loginId("admin")
                     .password(passwordEncoder.encode("admin123")) // 비밀번호 암호화
-                    .role("ADMIN")
+                    .role("ROLE_ADMIN")
                     .build();
-            userMapper.createAdmin(admin);
+            userMapper.createAdmin(admin); // createAdmin 메서드는 admin 계정을 저장
         } else {
             System.out.println("Admin 계정이 이미 존재합니다.");
         }

@@ -23,8 +23,10 @@ public class SecurityConfig {
         http
                 .csrf().disable()
                 .authorizeHttpRequests((requests) -> requests
-                        .requestMatchers("/login", "/register", "/resources/**", "/check/**").permitAll()
-                        .anyRequest().authenticated()
+                        .requestMatchers("/login", "/resources/**", "/check/**").permitAll() // 누구나 접근 가능
+                        .requestMatchers("/register", "/search").hasRole("ADMIN") // 관리자만 접근 가능
+                        .requestMatchers("/main").hasAnyRole("ADMIN","USER", "MANAGER") // 로그인된 사용자만 접근 가능
+                        .anyRequest().authenticated() // 그 외 요청은 인증 필요
                 )
                 .formLogin((form) -> form
                         .loginPage("/login")
@@ -35,7 +37,7 @@ public class SecurityConfig {
                 .logout((logout) -> logout
                         .logoutSuccessUrl("/login?logout")
                         .permitAll())
-                .userDetailsService(userDetailsService); // 추가된 부분
+                .userDetailsService(userDetailsService); // 사용자 세부정보 서비스 등록
 
         return http.build();
     }

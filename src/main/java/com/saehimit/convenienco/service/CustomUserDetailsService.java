@@ -26,10 +26,11 @@ public class CustomUserDetailsService implements UserDetailsService {
             throw new UsernameNotFoundException("User not found with loginId: " + loginId);
         }
 
+        // 여기서 UserDetails 객체로 변환
         return User.builder()
                 .username(user.getLoginId())
                 .password(user.getPassword())
-                .roles(user.getRole())
+                .roles(user.getRole().replace("ROLE_", "")) // ROLE_ 제거
                 .build();
     }
 }
