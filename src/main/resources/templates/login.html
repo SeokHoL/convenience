@@ -81,17 +81,19 @@
 <body>
 <div class="login-container">
     <h2>로그인</h2>
-    <div th:if="${error}" class="alert alert-danger">
-        <span th:text="${error}"></span>
+    <div th:if="${session['error']}" class="alert alert-danger">
+        <span th:text="${session['error']}"></span>
     </div>
-    <div th:if="${message}" class="alert alert-success">
-        <span th:text="${message}"></span>
-    </div>
+
     <form th:action="@{/login}" method="post">
         <input type="text" class="form-control" name="username" placeholder="아이디" required>
         <input type="password" class="form-control" name="password" placeholder="비밀번호" required>
         <button type="submit" class="btn btn-primary w-100">로그인</button>
     </form>
 </div>
+<script>
+    // 에러 메시지를 디버깅하기 위해 확인 로그를 추가할 수 있습니다.
+    console.log('로그인 페이지 로드됨');
+</script>
 </body>
 </html>

@@ -92,6 +92,8 @@
         <h3 class="mb-4">검색 결과</h3>
         <button class="btn btn-warning mb-3" onclick="editSelected()">수정</button>
         <button class="btn btn-danger mb-3" onclick="deleteSelected()">삭제</button>
+        <button class="btn btn-warning mb-3" onclick="unlockAccount()">계정 잠금 해제</button>
+
         <table class="table table-bordered table-hover">
             <thead>
             <tr>
@@ -105,8 +107,10 @@
                 <th>입사일자</th>
                 <th>퇴사일자</th>
                 <th>로그인 실패 횟수</th>
+                <th>계정상태</th>
                 <th>수정일시</th>
                 <th>수정자</th>
+
             </tr>
             </thead>
             <tbody th:if="${users != null and not #lists.isEmpty(users)}" th:each="user : ${users}">
@@ -121,8 +125,10 @@
                 <td th:text="${user.joinDate}"></td>
                 <td th:text="${user.leaveDate}"></td>
                 <td th:text="${user.loginFailCount}"></td>
+                <td th:text="${user.accountLocked ? '잠김' : '활성'}"></td>
                 <td th:text="${user.modifiedAt}"></td>
                 <td th:text="${user.modifiedBy}"></td>
+
             </tr>
             </tbody>
         </table>
@@ -187,10 +193,10 @@
                             <input type="date" class="form-control" id="modalLeaveDate" name="leaveDate">
                         </div>
 
-                        <div class="mb-3">
-                            <label for="modalLoginFailCount" class="form-label">로그인 실패 횟수 초기화</label>
-                            <input type="number" class="form-control" id="modalLoginFailCount" name="loginFailCount" value="0">
-                        </div>
+<!--                        <div class="mb-3">-->
+<!--                            <label for="modalLoginFailCount" class="form-label">로그인 실패 횟수 초기화</label>-->
+<!--                            <input type="number" class="form-control" id="modalLoginFailCount" name="loginFailCount" value="0">-->
+<!--                        </div>-->
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
@@ -204,6 +210,37 @@
 </div>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
 <script>
+    function unlockAccount() {
+        const checkboxes = document.querySelectorAll('input[name="selectedUsers"]:checked');
+        if (checkboxes.length === 0) {
+            alert('잠금 해제할 사용자를 선택해주세요.');
+            return;
+        }
+        if (checkboxes.length > 1) {
+            alert('한 번에 하나의 계정만 잠금 해제할 수 있습니다.');
+            return;
+        }
+
+        const loginId = checkboxes[0].closest('tr').cells[1].textContent.trim();
+
+        if (confirm(`사용자 [${loginId}]의 계정을 잠금 해제하시겠습니까?`)) {
+            const form = document.createElement('form');
+            form.method = 'post';
+            form.action = '/unlock';
+
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'loginId';
+            input.value = loginId;
+            form.appendChild(input);
+
+            document.body.appendChild(form);
+            form.submit();
+        }
+    }
+
+
+
     function editSelected() {
         const checkboxes = document.querySelectorAll('input[name="selectedUsers"]:checked');
 
@@ -245,7 +282,7 @@
         document.getElementById('modalPhoneNumber').value = user.phoneNumber;
         document.getElementById('modalJoinDate').value = user.joinDate || '';
         document.getElementById('modalLeaveDate').value = user.leaveDate || '';
-        document.getElementById('modalLoginFailCount').value = user.loginFailCount;
+        // document.getElementById('modalLoginFailCount').value = user.loginFailCount;
 
         const modal = new bootstrap.Modal(document.getElementById('editModal'));
         modal.show();

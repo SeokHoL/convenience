@@ -2,23 +2,22 @@ package com.saehimit.convenienco.service;
 
 import com.saehimit.convenienco.dto.UsersDto;
 import com.saehimit.convenienco.mapper.UserMapper;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
 @Service
+@RequiredArgsConstructor
 public class UserService {
 
     private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
 
-    @Autowired
-    public UserService(UserMapper userMapper, PasswordEncoder passwordEncoder) {
-        this.userMapper = userMapper;
-        this.passwordEncoder = passwordEncoder;
-    }
+
 
     public void initializeAdmin() {
         // Admin 계정 존재 여부 확인
@@ -78,5 +77,35 @@ public class UserService {
         userMapper.updateUser(userDto);
     }
 
+    public void unlockAccount(String loginId) {
+        userMapper.unlockAccount(loginId); // 계정 잠금 해제
+        userMapper.resetLoginFailCount(loginId); // 로그인 실패 횟수 초기화
+    }
+    public void resetLoginFailCount(String loginId) {
+        userMapper.resetLoginFailCount(loginId);
+    }
 
+
+
+
+//    public void handleLoginFailure(String loginId) {
+//        UsersDto user = userMapper.findUserByLoginId(loginId);
+//        if (user == null) {
+//            throw new UsernameNotFoundException("아이디가 존재하지 않습니다.");
+//        }
+//        if (user.isAccountLocked()) {
+//            throw new IllegalStateException("계정이 잠겼습니다. 관리자에게 문의하세요.");
+//        }
+//
+//        userMapper.incrementLoginFailCount(loginId);
+//        if (user.getLoginFailCount() + 1 >= 5) {
+//            userMapper.lockAccount(loginId);
+//            throw new IllegalStateException("로그인 실패가 5회를 초과하여 계정이 잠겼습니다.");
+//        }
+//    }
+//
+//    public UsersDto findByLoginId(String loginId) {
+//        return userMapper.findUserByLoginId(loginId);
+//    }
 }
+

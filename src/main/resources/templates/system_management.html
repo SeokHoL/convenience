@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>공통 코드 관리</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css">
+    <style>
+        body {
+            font-family: 'Noto Sans KR', Arial, sans-serif;
+            background-color: #f4f6f9;
+        }
+
+        .top-bar {
+            background-color: #007bff;
+            color: white;
+            padding: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .logout-btn {
+            background-color: white;
+            border: none;
+            color: #007bff;
+            padding: 5px 15px;
+            font-size: 1rem;
+            border-radius: 5px;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            font-weight: bold;
+        }
+
+        .logout-btn:hover {
+            background-color: #e3f2fd;
+            color: #0056b3;
+            text-decoration: none;
+        }
+
+        .form-container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+
+        .table {
+            background-color: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .table th {
+            background-color: #007bff;
+            color: white;
+        }
+
+        .modal-content {
+            border-radius: 8px;
+        }
+
+        .modal-header {
+            background-color: #007bff;
+            color: white;
+        }
+
+        .btn-primary,
+        .btn-success {
+            border-radius: 20px;
+        }
+
+        .btn-close {
+            background-color: white;
+            color: black;
+        }
+    </style>
+</head>
+<body>
+<div class="top-bar">
+    <span>공통 코드 관리</span>
+    <div>
+        <a href="/main" class="text-white text-decoration-none me-3">홈</a>
+        <a href="/logout" class="text-white text-decoration-none">로그아웃</a>
+    </div>
+</div>
+
+<div class="container mt-4">
+    <div class="form-container">
+        <h3 class="mb-4">공통 코드 검색</h3>
+        <form th:action="@{/system_management/search}" method="post" class="row g-3">
+            <div class="col-md-3">
+                <label for="codeIndex" class="form-label">색인코드</label>
+                <input type="text" id="codeIndex" name="codeIndex" class="form-control" placeholder="색인코드">
+            </div>
+            <div class="col-md-3">
+                <label for="codeValue" class="form-label">공통코드</label>
+                <input type="text" id="codeValue" name="codeValue" class="form-control" placeholder="공통코드">
+            </div>
+            <div class="col-md-3">
+                <label for="codeName" class="form-label">공통코드명</label>
+                <input type="text" id="codeName" name="codeName" class="form-control" placeholder="공통코드명">
+            </div>
+            <div class="col-md-3 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary w-100">검색</button>
+            </div>
+        </form>
+    </div>
+
+    <div class="text-end mb-3">
+        <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addCodeModal">추가</button>
+    </div>
+
+    <table class="table table-bordered table-hover">
+        <thead>
+        <tr>
+            <th>색인코드</th>
+            <th>공통코드</th>
+            <th>공통코드명</th>
+            <th>사용여부</th>
+            <th>등록날짜</th>
+            <th>등록자</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="code : ${codes}">
+            <td th:text="${code.codeIndex}"></td>
+            <td th:text="${code.codeValue}"></td>
+            <td th:text="${code.codeName}"></td>
+            <td th:text="${code.active ? '사용' : '미사용'}"></td>
+            <td th:text="${code.registeredDate}"></td>
+            <td th:text="${code.modifiedBy}"></td>
+        </tr>
+        </tbody>
+    </table>
+</div>
+
+<!-- 추가 모달 -->
+<div class="modal fade" id="addCodeModal" tabindex="-1" aria-labelledby="addCodeModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addCodeModalLabel">공통 코드 추가</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form th:action="@{/system_management/add}" method="post">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="codeIndex" class="form-label">색인코드</label>
+                        <input type="text" id="codeIndex" name="codeIndex" class="form-control" placeholder="색인코드" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="codeValue" class="form-label">공통코드</label>
+                        <input type="text" id="codeValue" name="codeValue" class="form-control" placeholder="공통코드" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="codeName" class="form-label">공통코드명</label>
+                        <input type="text" id="codeName" name="codeName" class="form-control" placeholder="공통코드명" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="active" class="form-label">사용 여부</label>
+                        <select id="active" name="active" class="form-select">
+                            <option value="true">사용</option>
+                            <option value="false">미사용</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">닫기</button>
+                    <button type="submit" class="btn btn-success">추가</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

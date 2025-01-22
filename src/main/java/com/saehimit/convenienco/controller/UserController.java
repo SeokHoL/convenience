@@ -3,6 +3,7 @@ package com.saehimit.convenienco.controller;
 import com.saehimit.convenienco.dto.UsersDto;
 import com.saehimit.convenienco.service.UserService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -15,6 +16,27 @@ import java.util.List;
 public class UserController {
 
     private final UserService userService;
+
+    @GetMapping("/login")
+    public String login(String error, Model model) {
+        if (error != null) {
+            model.addAttribute("error", error);
+        }
+        return "login";
+    }
+
+//    @PostMapping("/login")
+//    public String authenticate(@RequestParam String username, @RequestParam String password, Model model) {
+//        try {
+//            // 서비스에서 인증 수행
+//            UsersDto user = userService.authenticate(username, password);
+//            return "redirect:/main"; // 인증 성공 시 리다이렉트
+//        } catch (Exception e) {
+//            model.addAttribute("error", e.getMessage()); // 예외 메시지 전달
+//            return "login"; // 로그인 페이지로 돌아감
+//        }
+//    }
+
 
     @GetMapping("/register")
     public String showRegisterPage(Model model) {
@@ -77,9 +99,14 @@ public class UserController {
         return "redirect:/search";
     }
 
-
+    @PostMapping("/unlock")
+    public String unlockAccount(@RequestParam String loginId) {
+        userService.unlockAccount(loginId);
+        return "redirect:/search";
     }
 
+
+}
 
 
 

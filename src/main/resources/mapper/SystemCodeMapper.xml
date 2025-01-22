@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.saehimit.convenienco.mapper.SystemCodeMapper">
+
+    <!-- 전체 조회 -->
+    <select id="findAll" resultType="com.saehimit.convenienco.dto.SystemCodeDto">
+        SELECT
+            code_id AS codeId,
+            code_index AS codeIndex,
+            code_value AS codeValue,
+            code_name AS codeName,
+            active AS active,
+            registered_by AS registeredBy,
+            registered_date AS registeredDate,
+            modified_by AS modifiedBy
+        FROM SystemCodes
+        ORDER BY registered_date DESC
+    </select>
+
+
+    <!-- 색인코드로 검색 -->
+    <select id="findByIndex" parameterType="string" resultType="com.saehimit.convenienco.dto.SystemCodeDto">
+        SELECT * FROM SystemCodes WHERE code_index = #{codeIndex}
+    </select>
+
+    <!-- 코드 추가 -->
+    <insert id="addCode" parameterType="com.saehimit.convenienco.dto.SystemCodeDto">
+        INSERT INTO SystemCodes (code_index, code_value, code_name, active, registered_by, registered_date, modified_by)
+        VALUES (#{codeIndex}, #{codeValue}, #{codeName}, #{active}, #{registeredBy}, CURRENT_TIMESTAMP, #{modifiedBy});
+    </insert>
+
+
+    <!-- 코드 수정 -->
+    <update id="updateCode" parameterType="com.saehimit.convenienco.dto.SystemCodeDto">
+        UPDATE SystemCodes
+        SET code_value = #{codeValue}, code_name = #{codeName}, modified_by = #{modifiedBy}
+        WHERE code_id = #{codeId}
+    </update>
+
+
+</mapper>

@@ -25,15 +25,12 @@
 
     <!-- 사용자 등록 -->
 
-        <insert id="insertUser" parameterType="com.saehimit.convenienco.dto.UsersDto">
-            INSERT INTO users (user_id, username, password, email, phone_number, branch, role, join_date)
-            VALUES (#{userId}, #{username}, #{password}, #{email}, #{phoneNumber}, #{branch}, #{role}, #{joinDate});
-        </insert>
+    <insert id="insertUser" parameterType="com.saehimit.convenienco.dto.UsersDto">
+        INSERT INTO users (user_id, username, password, email, phone_number, branch, role, join_date)
+        VALUES (#{userId}, #{username}, #{password}, #{email}, #{phoneNumber}, #{branch}, #{role}, #{joinDate});
+    </insert>
 
-    <!-- 아이디 중복 확인 -->
-    <select id="findUserByLoginId" resultType="com.saehimit.convenienco.dto.UsersDto">
-        SELECT * FROM users WHERE login_id = #{loginId}
-    </select>
+
 
     <!-- 이메일 중복 확인 -->
     <select id="findUserByEmail" resultType="com.saehimit.convenienco.dto.UsersDto">
@@ -75,6 +72,36 @@
             #{id}
         </foreach>
     </delete>
+
+    <!-- 사용자 검색 -->
+    <select id="findUserByLoginId" parameterType="String" resultType="com.saehimit.convenienco.dto.UsersDto">
+        SELECT * FROM users WHERE login_id = #{loginId}
+    </select>
+
+    <!-- 로그인 실패 횟수 증가 -->
+    <update id="incrementLoginFailCount" >
+        UPDATE users SET login_fail_count = login_fail_count + 1 WHERE login_id = #{loginId}
+    </update>
+    <!-- 계정 잠금 -->
+    <update id="lockAccount" parameterType="String">
+        UPDATE users
+        SET account_locked = TRUE
+        WHERE login_id = #{loginId}
+    </update>
+
+    <!-- 로그인 실패 횟수 초기화 -->
+    <update id="resetLoginFailCount" parameterType="String">
+        UPDATE users
+        SET login_fail_count = 0
+        WHERE login_id = #{loginId}
+    </update>
+    <!-- 계정 잠금 해제 -->
+    <update id="unlockAccount" parameterType="String">
+        UPDATE users
+        SET account_locked = FALSE,
+            login_fail_count = 0
+        WHERE login_id = #{loginId}
+    </update>
 
 
 </mapper>

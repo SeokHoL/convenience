@@ -174,7 +174,10 @@
         <button class="btn btn-primary">출고관리</button>
         <button class="btn btn-primary">물류현황관리</button>
         <button class="btn btn-primary">기준정보관리</button>
-        <button class="btn btn-primary">시스템관리</button>
+        <button class="btn btn-primary" onclick="toggleSubmenu('systemManagementMenu')">시스템 관리</button>
+        <div id="systemManagementMenu" class="submenu">
+            <button class="btn btn-link" onclick="checkAccessAndRedirect('/system_management')">공통코드 관리</button>
+        </div>
         <button class="btn btn-primary" onclick="toggleSubmenu('userManagementMenu')">사용자 관리</button>
         <div id="userManagementMenu" class="submenu">
             <button class="btn btn-link" onclick="checkAccessAndRedirect('/register')">사용자 정보 등록</button>

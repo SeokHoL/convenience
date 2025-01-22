@@ -16,7 +16,7 @@ public interface UserMapper {
     void saveUser(UsersDto userDto);
 
 
-    UsersDto findUserByLoginId(String loginId);
+    UsersDto findUserByLoginId(String loginId); // 사용자 검색
     UsersDto findUserByEmail(String email);
     UsersDto findUserByPhoneNumber(String phoneNumber);
 
@@ -27,6 +27,15 @@ public interface UserMapper {
     void deleteUsers(@Param("loginIds") List<Long> loginIds);
 
     void updateUser(UsersDto userDto);
+
+
+
+    void incrementLoginFailCount(String loginId); // 로그인 실패 횟수 증가
+
+    void lockAccount(String loginId); // 계정 잠금
+    void unlockAccount(String loginId);
+
+    void resetLoginFailCount(String loginId); // 로그인 실패 횟수 초기화
 
 
 }

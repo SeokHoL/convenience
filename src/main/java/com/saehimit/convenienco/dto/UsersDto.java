@@ -2,15 +2,21 @@ package com.saehimit.convenienco.dto;
 
 
 import lombok.*;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
 
+import java.io.Serializable;
 import java.time.LocalDate;
+import java.util.Collection;
+import java.util.List;
 
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class UsersDto {
+public class UsersDto implements UserDetails {
 
     private Long userId; // 식별자
     private String loginId;
@@ -27,4 +33,29 @@ public class UsersDto {
     private int loginFailCount; // 로그인 실패 횟수
     private LocalDate modifiedAt; // 수정 일시
     private String modifiedBy; // 수정자
+
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        return List.of(new SimpleGrantedAuthority(role));
+    }
+
+    @Override
+    public boolean isAccountNonExpired() {
+        return true;
+    }
+
+    @Override
+    public boolean isAccountNonLocked() {
+        return !this.accountLocked; // `accountLocked`가 true일 경우 로그인 불가
+    }
+
+    @Override
+    public boolean isCredentialsNonExpired() {
+        return true;
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return true;
+    }
 }
