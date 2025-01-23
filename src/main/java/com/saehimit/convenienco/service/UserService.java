@@ -4,6 +4,8 @@ import com.saehimit.convenienco.dto.UsersDto;
 import com.saehimit.convenienco.mapper.UserMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -24,6 +26,7 @@ public class UserService {
         if (userMapper.findByLoginId("admin") == null) { // findByLoginId 메서드는 UserMapper에 정의되어야 함
             UsersDto admin = UsersDto.builder()
                     .loginId("admin")
+                    .username("관리자")
                     .password(passwordEncoder.encode("admin123")) // 비밀번호 암호화
                     .role("ROLE_ADMIN")
                     .build();
@@ -72,10 +75,19 @@ public class UserService {
         userMapper.deleteUsers(loginIds);
     }
 
-    public void updateUser(UsersDto userDto, String modifier) {
-        userDto.setModifiedBy(modifier); // 수정자 설정
+    public void updateUser(UsersDto userDto) {
+        // modifier 파라미터 제거하고 이미 설정된 modifiedBy 사용
         userMapper.updateUser(userDto);
     }
+
+    public void updateUserWithModifier(UsersDto userDto) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String loginId = authentication.getName(); // 로그인 ID 가져오기
+
+        userDto.setModifiedBy(loginId); // 수정자 설정
+        userMapper.updateUser(userDto);
+    }
+
 
     public void unlockAccount(String loginId) {
         userMapper.unlockAccount(loginId); // 계정 잠금 해제

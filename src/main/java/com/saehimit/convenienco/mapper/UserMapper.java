@@ -1,5 +1,6 @@
 package com.saehimit.convenienco.mapper;
 
+import com.saehimit.convenienco.dto.SystemCodeDto;
 import com.saehimit.convenienco.dto.UsersDto;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -23,6 +24,8 @@ public interface UserMapper {
     List<UsersDto> searchUsers(@Param("loginId") String loginId,
                                @Param("username") String username,
                                @Param("branch") String branch);
+
+
 
     void deleteUsers(@Param("loginIds") List<Long> loginIds);
 

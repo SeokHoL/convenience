@@ -2,6 +2,7 @@ package com.saehimit.convenienco.dto;
 
 import lombok.Data;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Data
@@ -13,6 +14,6 @@ public class SystemCodeDto {
     private boolean active; // 사용 여부
     private String registeredBy; // 등록자
     private String modifiedBy; //수정자
-    private LocalDateTime registeredDate; // 등록 날짜
-    private LocalDateTime lastModified;  // 수정 날짜
+    private LocalDate registeredDate; // 등록 날짜
+    private LocalDate lastModified;  // 수정 날짜
 }

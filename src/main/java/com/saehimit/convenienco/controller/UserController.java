@@ -3,6 +3,8 @@ package com.saehimit.convenienco.controller;
 import com.saehimit.convenienco.dto.UsersDto;
 import com.saehimit.convenienco.service.UserService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -92,12 +94,15 @@ public class UserController {
         return "redirect:/search";
     }
 
+
     @PostMapping("/update")
-    public String updateUser(@ModelAttribute UsersDto userDto, Principal principal) {
-        String modifier = principal.getName(); // 로그인한 사용자의 아이디 가져오기
-        userService.updateUser(userDto, modifier); // 수정자 정보 포함하여 업데이트
+    public String updateUser(@ModelAttribute UsersDto userDto) {
+        userService.updateUserWithModifier(userDto);
         return "redirect:/search";
     }
+
+
+
 
     @PostMapping("/unlock")
     public String unlockAccount(@RequestParam String loginId) {

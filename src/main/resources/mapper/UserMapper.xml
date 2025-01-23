@@ -7,8 +7,8 @@
 
     <!-- 관리자 계정 생성 -->
     <insert id="createAdmin">
-        INSERT INTO users (login_id, password, role)
-        VALUES (#{loginId}, #{password}, #{role})
+        INSERT INTO users (login_id, password, role, username)
+        VALUES (#{loginId}, #{password}, #{role}, #{username})
     </insert>
 
     <select id="findByLoginId" parameterType="string" resultType="com.saehimit.convenienco.dto.UsersDto">
@@ -43,7 +43,7 @@
     </select>
 
     <select id="searchUsers" resultType="com.saehimit.convenienco.dto.UsersDto">
-        SELECT * FROM users
+        SELECT u.* FROM users u
         WHERE login_id LIKE CONCAT('%', #{loginId}, '%')
           AND username LIKE CONCAT('%', #{username}, '%')
           AND (branch = #{branch} OR #{branch} IS NULL OR #{branch} = '')
@@ -61,9 +61,10 @@
         leave_date = #{leaveDate},
         login_fail_count = #{loginFailCount},
         modified_at = NOW(),
-        modified_by = #{modifiedBy} <!-- 수정자 -->
+        modified_by = #{modifiedBy} <!-- 수정자 필드 -->
         WHERE user_id = #{userId}
     </update>
+
 
     <delete id="deleteUsers" parameterType="list">
         DELETE FROM users

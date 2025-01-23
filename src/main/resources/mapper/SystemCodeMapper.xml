@@ -16,29 +16,75 @@
             registered_by AS registeredBy,
             registered_date AS registeredDate,
             modified_by AS modifiedBy
-        FROM SystemCodes
+        FROM systemcode
         ORDER BY registered_date DESC
     </select>
 
 
     <!-- 색인코드로 검색 -->
     <select id="findByIndex" parameterType="string" resultType="com.saehimit.convenienco.dto.SystemCodeDto">
-        SELECT * FROM SystemCodes WHERE code_index = #{codeIndex}
+        SELECT * FROM systemcode WHERE code_index = #{codeIndex}
     </select>
 
     <!-- 코드 추가 -->
     <insert id="addCode" parameterType="com.saehimit.convenienco.dto.SystemCodeDto">
-        INSERT INTO SystemCodes (code_index, code_value, code_name, active, registered_by, registered_date, modified_by)
+        INSERT INTO systemcode (code_index, code_value, code_name, active, registered_by, registered_date, modified_by)
         VALUES (#{codeIndex}, #{codeValue}, #{codeName}, #{active}, #{registeredBy}, CURRENT_TIMESTAMP, #{modifiedBy});
     </insert>
 
-
+    <!--insert, update, delete는  resultType  -->
     <!-- 코드 수정 -->
     <update id="updateCode" parameterType="com.saehimit.convenienco.dto.SystemCodeDto">
-        UPDATE SystemCodes
+        UPDATE systemcode
         SET code_value = #{codeValue}, code_name = #{codeName}, modified_by = #{modifiedBy}
         WHERE code_id = #{codeId}
     </update>
+
+    <!--resultType을 명시적으로 사용할 때는 쿼리가 SELECT 구문이고, 쿼리 결과를 Java 객체로 매핑해야 하는 경우-->
+    <!--공통코드 조회 -->
+    <select id="searchCodes" parameterType="com.saehimit.convenienco.dto.SystemCodeDto" resultType="com.saehimit.convenienco.dto.SystemCodeDto">
+        SELECT *
+        FROM systemcode
+        <where>
+            <if test="codeIndex != null and codeIndex != ''">
+                code_index = #{codeIndex}
+            </if>
+            <if test="codeValue != null and codeValue != ''">
+                AND code_value = #{codeValue}
+            </if>
+            <if test="codeName != null and codeName != ''">
+                AND code_name LIKE CONCAT('%', #{codeName}, '%')
+            </if>
+        </where>
+    </select>
+
+    <delete id="deleteCode" parameterType="java.util.List">
+        DELETE FROM systemcode WHERE code_id IN
+        <foreach item="id" collection="codeIds" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+    <select id="checkDuplicateCode" parameterType="com.saehimit.convenienco.dto.SystemCodeDto" resultType="int">
+        SELECT COUNT(*)
+        FROM systemcode
+        WHERE code_value = #{codeValue} AND code_name = #{codeName}
+    </select>
+
+    <!-- 공통코드 중복처리 -->
+    <select id="checkCodeValueDuplicate" parameterType="string" resultType="int">
+        SELECT COUNT(*)
+        FROM systemcode
+        WHERE code_value = #{codeValue}
+    </select>
+
+    <!-- 공통코드명 중복처리 -->
+    <select id="checkCodeNameDuplicate" parameterType="string" resultType="int">
+        SELECT COUNT(*)
+        FROM systemcode
+        WHERE code_name = #{codeName}
+    </select>
+
 
 
 </mapper>

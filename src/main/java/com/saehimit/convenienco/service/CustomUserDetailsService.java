@@ -25,7 +25,7 @@ public class CustomUserDetailsService implements UserDetailsService {
         if (user == null) {
             throw new UsernameNotFoundException("User not found with loginId: " + loginId);
         }
-
+        System.out.println("Loaded user loginId: " + user.getLoginId());
         // UsersDto 자체가 UserDetails를 구현하므로 변환 없이 반환
         return user;
     }

@@ -31,6 +31,29 @@
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
             padding: 20px;
             margin-bottom: 30px;
+            font-size: 0.9rem; /* 테이블 글꼴 크기를 줄임 */
+        }
+        .table-container th, .table-container td {
+            text-align: center; /* 텍스트 가운데 정렬 */
+            vertical-align: middle; /* 텍스트 세로 정렬 */
+        }
+        .table-container th:nth-child(10), .table-container td:nth-child(10) {
+            width: 80px; /* 열 너비 제한 */
+            max-width: 80px; /* 최대 너비 설정 */
+            text-align: center; /* 텍스트 가운데 정렬 */
+        }
+        .table-container th:nth-child(2), .table-container td:nth-child(2) {
+            max-width: 100px; /* 아이디 열의 최대 너비 */
+            white-space: nowrap; /* 텍스트 줄바꿈 방지 */
+            overflow: hidden; /* 넘친 텍스트 숨기기 */
+            text-overflow: ellipsis; /* 말줄임 표시 */
+        }
+        .table-container table {
+            font-size: 0.9rem; /* 글꼴 크기 줄이기 */
+        }
+
+        .table-container th, .table-container td {
+            vertical-align: middle; /* 텍스트 수직 정렬 */
         }
 
         .table thead {
