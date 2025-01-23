@@ -206,6 +206,8 @@
             <th>사용여부</th>
             <th>등록날짜</th>
             <th>등록자</th>
+            <th>수정일시</th>
+            <th>수정자</th>
         </tr>
         </thead>
         <tbody>
@@ -216,9 +218,12 @@
             <td th:text="${code.codeName}"></td>
             <td th:text="${code.active ? '사용' : '미사용'}"></td>
             <td th:text="${#temporals.format(code.registeredDate, 'yyyy-MM-dd')}"></td>
+            <td th:text="${code.registeredBy}"></td>
+            <td th:text="${#temporals.format(code.lastModified, 'yyyy-MM-dd')}"></td>
             <td th:text="${code.modifiedBy}"></td>
         </tr>
         </tbody>
+
     </table>
 
 </div>
@@ -235,7 +240,16 @@
             <div class="modal-body">
                     <div class="mb-3">
                         <label for="codeIndex" class="form-label">색인코드</label>
-                        <input type="text" id="codeIndex" name="codeIndex" class="form-control" placeholder="색인코드" required>
+                        <select class="form-select" id="codeIndex" name="codeIndex">
+                            <option value="">전체</option>
+                            <option value="품목유형">품목유형</option>
+                            <option value="발주유형">발주유형</option>
+                            <option value="입고유형">입고유형</option>
+                            <option value="출고유형">출고유형</option>
+                            <option value="발주품목상태">발주품목상태</option>
+                            <option value="발주상태">발주상태</option>
+                        </select>
+<!--                        <input type="text" id="codeIndex" name="codeIndex" class="form-control" placeholder="색인코드" required>-->
                     </div>
                     <div class="mb-3">
                         <label for="codeValue" class="form-label">공통코드</label>
@@ -277,7 +291,16 @@
                     <input type="hidden" id="editCodeId" name="codeId">
                     <div class="mb-3">
                         <label for="editCodeIndex" class="form-label">색인코드</label>
-                        <input type="text" id="editCodeIndex" name="codeIndex" class="form-control" required>
+                        <select class="form-select" id="editCodeIndex" name="codeIndex">
+                            <option value="">전체</option>
+                            <option value="품목유형">품목유형</option>
+                            <option value="발주유형">발주유형</option>
+                            <option value="입고유형">입고유형</option>
+                            <option value="출고유형">출고유형</option>
+                            <option value="발주품목상태">발주품목상태</option>
+                            <option value="발주상태">발주상태</option>
+                        </select>
+<!--                        <input type="text" id="editCodeIndex" name="codeIndex" class="form-control" required>-->
                     </div>
                     <div class="mb-3">
                         <label for="editCodeValue" class="form-label">공통코드</label>

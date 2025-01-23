@@ -15,6 +15,7 @@ public interface SystemCodeMapper {
     List<SystemCodeDto> searchCodes(@Param("codeIndex") String codeIndex,
                                     @Param("codeValue") String codeValue,
                                     @Param("codeName") String codeName);
+
     void addCode(SystemCodeDto systemCodeDto);
     void updateCode(SystemCodeDto systemCodeDto);
 
@@ -25,4 +26,8 @@ public interface SystemCodeMapper {
     int checkCodeValueDuplicate(String codeValue);
 
     int checkCodeNameDuplicate(String codeName);
+
+    boolean isCodeValueDuplicateExcludeSelf(String codeValue, int codeId);
+
+    boolean isCodeNameDuplicateExcludeSelf(String codeName, int codeId);
 }

@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-
+// redirect 는 ->
 @Controller
 @RequestMapping("/system_management")
 public class SystemCodeController {
@@ -20,12 +20,16 @@ public class SystemCodeController {
         this.systemCodeService = service;
     }
 
+    //다른곳에서 (예를들면 PostMapping) 에서 redirect:/system_management를 사용하면 클라이언트가 새로운 GET 요청을 보내고, 서버가 이를 처리하기 위해 @GetMapping 메서드를 실행
+    //redirect 없으면 그냥 system_management 만 반환함. 그냥 썡
     @GetMapping
     public String showSystemManagementPage(Model model) {
         model.addAttribute("codes", systemCodeService.getAllCodes());
         return "system_management";
     }
 
+    //String을 반환하면 뷰 이름으로 간주 //템플릿 엔진(예: Thymeleaf, JSP 등)을 통해 HTML 파일을 렌더링하고 클라이언트에 반환
+    //ResponseEntity<?>는 HTTP 응답 자체를 직접 정의할 수 있음. / HTTP 200 응답과 JSON 데이터 반환
     @PostMapping("/search")
     public String searchCodes(
             @RequestParam(required = false) String codeIndex,
@@ -60,30 +64,20 @@ public class SystemCodeController {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String currentUsername = authentication.getName(); // 로그인한 사용자의 ID
 
-        systemCodeDto.setModifiedBy(currentUsername); // 등록자를 로그인 사용자 ID로 설정
+        systemCodeDto.setRegisteredBy(currentUsername); // 등록자 설정
+//        systemCodeDto.setModifiedBy(currentUsername);   // 수정자 설정
         systemCodeService.addCode(systemCodeDto);
         return "redirect:/system_management";
     }
 
-
-    @PostMapping("/update")
-    public String updateCode(SystemCodeDto systemCodeDto) {
-        systemCodeService.updateCode(systemCodeDto);
-        return "redirect:/system_management";
-    }
-
-
-    @PostMapping("/delete")
-    public String deleteCodes(@RequestParam("codeIds") List<Integer> codeIds) {
-        systemCodeService.deleteCode(codeIds); // 여러 개 삭제
-        return "redirect:/system_management";
-    }
-
+    //추가버튼
     @PostMapping("/addCode")
     public String addCodeWithValidation(@ModelAttribute SystemCodeDto systemCodeDto, Model model) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String currentUsername = authentication.getName();
-        systemCodeDto.setModifiedBy(currentUsername);
+
+        systemCodeDto.setRegisteredBy(currentUsername); // 등록자 설정
+//        systemCodeDto.setModifiedBy(currentUsername);   // 수정자 설정
 
         try {
             systemCodeService.addCodeWithValidation(systemCodeDto); // 중복 확인 후 추가
@@ -95,8 +89,33 @@ public class SystemCodeController {
         }
     }
 
+    //수정버튼
+    @PostMapping("/update")
+    public String updateCode(@ModelAttribute SystemCodeDto systemCodeDto, Model model) {
+        try {
+            // 중복 검증 및 업데이트 처리
+            systemCodeService.updateCodeWithValidation(systemCodeDto);
+        } catch (IllegalArgumentException e) {
+            // 에러 메시지와 기존 데이터를 모델에 설정
+            model.addAttribute("error", e.getMessage());
+            model.addAttribute("codes", systemCodeService.getAllCodes());
+            return "system_management"; // 에러 발생 시 다시 페이지 로드
+        }
+        return "redirect:/system_management";
+    }
+
+
+
+    @PostMapping("/delete")
+    public String deleteCodes(@RequestParam("codeIds") List<Integer> codeIds) {
+        systemCodeService.deleteCode(codeIds); // 여러 개 삭제
+        return "redirect:/system_management";
+    }
+
+
+    }
 
 
 
 
-}
+

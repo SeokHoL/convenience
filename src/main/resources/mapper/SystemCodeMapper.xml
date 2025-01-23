@@ -15,7 +15,8 @@
             active AS active,
             registered_by AS registeredBy,
             registered_date AS registeredDate,
-            modified_by AS modifiedBy
+            modified_by AS modifiedBy,
+            last_modified AS lastModified
         FROM systemcode
         ORDER BY registered_date DESC
     </select>
@@ -28,17 +29,28 @@
 
     <!-- 코드 추가 -->
     <insert id="addCode" parameterType="com.saehimit.convenienco.dto.SystemCodeDto">
-        INSERT INTO systemcode (code_index, code_value, code_name, active, registered_by, registered_date, modified_by)
-        VALUES (#{codeIndex}, #{codeValue}, #{codeName}, #{active}, #{registeredBy}, CURRENT_TIMESTAMP, #{modifiedBy});
+        INSERT INTO systemcode (code_index, code_value, code_name, active, registered_by, registered_date)
+        VALUES (#{codeIndex}, #{codeValue}, #{codeName}, #{active}, #{registeredBy}, CURRENT_TIMESTAMP);
     </insert>
+
 
     <!--insert, update, delete는  resultType  -->
     <!-- 코드 수정 -->
     <update id="updateCode" parameterType="com.saehimit.convenienco.dto.SystemCodeDto">
         UPDATE systemcode
-        SET code_value = #{codeValue}, code_name = #{codeName}, modified_by = #{modifiedBy}
-        WHERE code_id = #{codeId}
+        SET
+            code_Index = #{codeIndex},
+            code_value = #{codeValue},
+            code_name = #{codeName},
+            active = #{active},
+            modified_by = #{modifiedBy},
+            last_modified = #{lastModified}
+        WHERE
+            code_id = #{codeId}
     </update>
+
+
+
 
     <!--resultType을 명시적으로 사용할 때는 쿼리가 SELECT 구문이고, 쿼리 결과를 Java 객체로 매핑해야 하는 경우-->
     <!--공통코드 조회 -->
@@ -71,20 +83,54 @@
         WHERE code_value = #{codeValue} AND code_name = #{codeName}
     </select>
 
-    <!-- 공통코드 중복처리 -->
-    <select id="checkCodeValueDuplicate" parameterType="string" resultType="int">
-        SELECT COUNT(*)
-        FROM systemcode
-        WHERE code_value = #{codeValue}
+    <select id="checkCodeValueDuplicate" resultType="int">
+        SELECT EXISTS(
+            SELECT 1
+            FROM systemcode
+            WHERE code_value = #{codeValue}
+        )
     </select>
 
-    <!-- 공통코드명 중복처리 -->
     <select id="checkCodeNameDuplicate" parameterType="string" resultType="int">
         SELECT COUNT(*)
         FROM systemcode
         WHERE code_name = #{codeName}
     </select>
 
+
+
+    <!-- 공통코드 중복처리 -->
+    <select id="isCodeValueDuplicate" resultType="int">
+        SELECT EXISTS(
+            SELECT 1
+            FROM systemcode
+            WHERE code_value = #{codeValue}
+        )
+    </select>
+    <!-- 공통코드명 중복처리 -->
+    <select id="isCodeNameDuplicate" resultType="boolean">
+        SELECT EXISTS(
+            SELECT 1
+            FROM systemcode
+            WHERE code_name = #{codeName}
+        )
+    </select>
+
+    <select id="isCodeValueDuplicateExcludeSelf" resultType="boolean">
+        SELECT EXISTS(
+            SELECT 1
+            FROM systemcode
+            WHERE code_value = #{codeValue} AND code_id != #{codeId}
+        )
+    </select>
+
+    <select id="isCodeNameDuplicateExcludeSelf" resultType="boolean">
+        SELECT EXISTS(
+            SELECT 1
+            FROM systemcode
+            WHERE code_name = #{codeName} AND code_id != #{codeId}
+        )
+    </select>
 
 
 </mapper>
