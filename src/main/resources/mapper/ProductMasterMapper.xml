@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.saehimit.convenienco.mapper.ProductMasterMapper">
+    <select id="findAll" resultType="ProductMasterDto">
+        SELECT * FROM ProductMaster  ORDER BY product_type ASC, product_code ASC
+
+    </select>
+
+    <select id="search" parameterType="map" resultType="ProductMasterDto">
+        SELECT * FROM ProductMaster
+        <where>
+            <if test="productType != null and productType != ''">
+                product_type = #{productType}
+            </if>
+            <if test="productCode != null and productCode != ''">
+                AND product_code LIKE CONCAT('%', #{productCode}, '%')
+            </if>
+            <if test="productName != null and productName != ''">
+                AND product_name LIKE CONCAT('%', #{productName}, '%')
+            </if>
+        </where>
+    </select>
+
+    <insert id="addProduct" parameterType="ProductMasterDto">
+        INSERT INTO ProductMaster (product_type, product_code, product_name, unit, price, active, registered_by, registered_date)
+        VALUES (#{productType}, #{productCode}, #{productName}, #{unit}, #{price}, #{active}, #{registeredBy}, CURRENT_TIMESTAMP);
+    </insert>
+
+
+    <update id="updateProduct" parameterType="com.saehimit.convenienco.dto.ProductMasterDto">
+        UPDATE ProductMaster
+        SET product_type = #{productType},
+            product_code = #{productCode},
+            product_name = #{productName},
+            unit = #{unit},
+            price = #{price},
+            modified_by = #{modifiedBy},
+            last_modified = CURRENT_TIMESTAMP
+        WHERE master_id = #{masterId}
+    </update>
+
+    <delete id="deleteProducts" parameterType="com.saehimit.convenienco.dto.ProductMasterDto">
+        DELETE FROM ProductMaster WHERE master_id IN
+        <foreach item="id" collection="ids" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+    <select id="checkProductCodeDuplicate" resultType="int">
+        SELECT EXISTS(
+            SELECT 1
+            FROM productmaster
+            WHERE product_code = #{productCode}
+        )
+    </select>
+    <select id="checkProductNameDuplicate" resultType="int">
+        SELECT EXISTS(
+            SELECT 1
+            FROM productmaster
+            WHERE product_name = #{productName}
+        )
+    </select>
+
+    <select id="checkCodeValueDuplicate" resultType="int">
+        SELECT COUNT(*)
+        FROM systemcode
+        WHERE code_value = #{codeValue}
+    </select>
+
+    <select id="checkCodeNameDuplicate" resultType="int">
+        SELECT COUNT(*)
+        FROM systemcode
+        WHERE code_name = #{codeName}
+    </select>
+
+    <select id="findById" parameterType="int" resultType="ProductMasterDto">
+        SELECT * FROM productmaster WHERE master_id = #{masterId}
+    </select>
+
+    <select id="findByProductCode" resultType="com.saehimit.convenienco.dto.ProductMasterDto">
+        SELECT * FROM productmaster WHERE product_code = #{productCode}
+    </select>
+
+
+
+</mapper>

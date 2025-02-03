@@ -1,7 +1,11 @@
 package com.saehimit.convenienco.controller;
-
+//다른곳에서 (예를들면 PostMapping) 에서 redirect:/system_management를 사용하면 클라이언트가 새로운 GET 요청을 보내고, 서버가 이를 처리하기 위해 @GetMapping 메서드를 실행
+//String을 반환하면 뷰 이름으로 간주 //템플릿 엔진(예: Thymeleaf, JSP 등)을 통해 HTML 파일을 렌더링하고 클라이언트에 반환
+//ResponseEntity<?>는 HTTP 응답 자체를 직접 정의할 수 있음. / HTTP 200 응답과 JSON 데이터 반환
+//redirect 없으면 그냥 system_management 만 반환함. 그냥 썡
 import com.saehimit.convenienco.dto.SystemCodeDto;
 import com.saehimit.convenienco.service.SystemCodeService;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
@@ -20,16 +24,14 @@ public class SystemCodeController {
         this.systemCodeService = service;
     }
 
-    //다른곳에서 (예를들면 PostMapping) 에서 redirect:/system_management를 사용하면 클라이언트가 새로운 GET 요청을 보내고, 서버가 이를 처리하기 위해 @GetMapping 메서드를 실행
-    //redirect 없으면 그냥 system_management 만 반환함. 그냥 썡
+
     @GetMapping
     public String showSystemManagementPage(Model model) {
         model.addAttribute("codes", systemCodeService.getAllCodes());
         return "system_management";
     }
 
-    //String을 반환하면 뷰 이름으로 간주 //템플릿 엔진(예: Thymeleaf, JSP 등)을 통해 HTML 파일을 렌더링하고 클라이언트에 반환
-    //ResponseEntity<?>는 HTTP 응답 자체를 직접 정의할 수 있음. / HTTP 200 응답과 JSON 데이터 반환
+
     @PostMapping("/search")
     public String searchCodes(
             @RequestParam(required = false) String codeIndex,
@@ -112,8 +114,21 @@ public class SystemCodeController {
         return "redirect:/system_management";
     }
 
-
+    @GetMapping("/check-duplicate-code")
+    public ResponseEntity<Boolean> checkCodeValueDuplicate(@RequestParam String codeValue) {
+        boolean isDuplicate = systemCodeService.isCodeValueDuplicate(codeValue);
+        return ResponseEntity.ok(isDuplicate);
     }
+
+    @GetMapping("/check-duplicate-name")
+    public ResponseEntity<Boolean> checkCodeNameDuplicate(@RequestParam String codeName) {
+        boolean isDuplicate = systemCodeService.isCodeNameDuplicate(codeName);
+        return ResponseEntity.ok(isDuplicate);
+    }
+
+
+
+}
 
 
 

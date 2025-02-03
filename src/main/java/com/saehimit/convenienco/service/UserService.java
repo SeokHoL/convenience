@@ -98,6 +98,9 @@ public class UserService {
     }
 
 
+    public UsersDto findByLoginId(String loginId) {
+        return userMapper.findByLoginId(loginId);
+    }
 
 
 //    public void handleLoginFailure(String loginId) {

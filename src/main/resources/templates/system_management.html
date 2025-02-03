@@ -253,13 +253,16 @@
                     </div>
                     <div class="mb-3">
                         <label for="codeValue" class="form-label">공통코드</label>
-                        <input type="text" id="codeValue" name="codeValue" class="form-control" placeholder="공통코드" required>
+                        <input type="text" id="codeValue" name="codeValue" class="form-control" placeholder="공통코드" required oninput="checkCodeValue()">
+                        <div id="codeValueMessage" class="text-danger" style="display: none;">이미 사용 중인 공통코드입니다.</div>
                     </div>
                     <div class="mb-3">
                         <label for="codeName" class="form-label">공통코드명</label>
-                        <input type="text" id="codeName" name="codeName" class="form-control" placeholder="공통코드명" required>
+                        <input type="text" id="codeName" name="codeName" class="form-control" placeholder="공통코드명" required oninput="checkCodeName()">
+                        <div id="codeNameMessage" class="text-danger" style="display: none;">이미 사용 중인 공통코드명입니다.</div>
                     </div>
-                    <div class="mb-3">
+
+                <div class="mb-3">
                         <label for="active" class="form-label">사용 여부</label>
                         <select id="active" name="active" class="form-select">
                             <option value="true">사용</option>
@@ -375,7 +378,7 @@
             codeId: checkboxes[0].value,
             codeIndex: selectedRow.cells[1].textContent.trim(),
             codeValue: selectedRow.cells[2].textContent.trim(),
-            codeName: selectedRow.cells[3].textContent.trim(),
+            codeName: selectedRow.cells[3].textContent.trim(),f
             active: selectedRow.cells[4].textContent.trim() === '사용' ? 'true' : 'false'
         };
 
@@ -390,6 +393,53 @@
             const editModal = new bootstrap.Modal(document.getElementById('editCodeModal'));
             editModal.show();
     }
+
+    // 공통코드 중복 확인
+    function checkCodeValue() {
+        const codeValueInput = document.getElementById('codeValue');
+        const codeValueMessage = document.getElementById('codeValueMessage');
+        const codeValue = codeValueInput.value.trim();
+
+        if (!codeValue) {
+            codeValueMessage.style.display = "none"; // 입력값이 없으면 메시지 숨김
+            return;
+        }
+
+        fetch(`/system_management/check-duplicate-code?codeValue=${encodeURIComponent(codeValue)}`)
+            .then(response => response.json())
+            .then(isDuplicate => {
+                if (isDuplicate) {
+                    codeValueMessage.style.display = "block"; // 중복일 경우 메시지 표시
+                } else {
+                    codeValueMessage.style.display = "none"; // 중복이 아니면 메시지 숨김
+                }
+            })
+            .catch(error => console.error('Error:', error));
+    }
+
+    // 공통코드명 중복 확인
+    function checkCodeName() {
+        const codeNameInput = document.getElementById('codeName');
+        const codeNameMessage = document.getElementById('codeNameMessage');
+        const codeName = codeNameInput.value.trim();
+
+        if (!codeName) {
+            codeNameMessage.style.display = "none"; // 입력값이 없으면 메시지 숨김
+            return;
+        }
+
+        fetch(`/system_management/check-duplicate-name?codeName=${encodeURIComponent(codeName)}`)
+            .then(response => response.json())
+            .then(isDuplicate => {
+                if (isDuplicate) {
+                    codeNameMessage.style.display = "block"; // 중복일 경우 메시지 표시
+                } else {
+                    codeNameMessage.style.display = "none"; // 중복이 아니면 메시지 숨김
+                }
+            })
+            .catch(error => console.error('Error:', error));
+    }
+
 
 
 </script>

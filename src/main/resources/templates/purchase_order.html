@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <title>구매 발주 관리</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css">
+  <style>
+    body {
+      font-family: 'Noto Sans KR', Arial, sans-serif;
+      background-color: #f4f6f9;
+    }
+
+    .top-bar {
+      background-color: #007bff;
+      color: white;
+      padding: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 1.5rem;
+      font-weight: bold;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .logout-btn {
+      background-color: white;
+      border: none;
+      color: #007bff;
+      padding: 5px 15px;
+      font-size: 1rem;
+      border-radius: 5px;
+      text-decoration: none;
+      transition: all 0.3s ease;
+      font-weight: bold;
+    }
+
+    .logout-btn:hover {
+      background-color: #e3f2fd;
+      color: #0056b3;
+      text-decoration: none;
+    }
+
+    .form-container {
+      background-color: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      margin-bottom: 20px;
+    }
+
+    .table {
+      background-color: white;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .table th {
+      background-color: #007bff;
+      color: white;
+    }
+
+    .btn-primary,
+    .btn-success {
+      border-radius: 20px;
+    }
+
+    th, td {
+      text-align: center; /* 텍스트 및 체크박스 중앙 정렬 */
+      vertical-align: middle;
+    }
+
+    .btn-success-custom {
+      background-color: #28a745;
+      color: white;
+      padding: 0.375rem 0.75rem;
+      border-radius: 5px;
+      transition: background-color 0.3s ease;
+    }
+
+    .btn-success-custom:hover {
+      background-color: #218838;
+    }
+
+    .btn-warning-custom {
+      background-color: #ffc107;
+      color: white;
+      padding: 0.375rem 0.75rem;
+      border-radius: 5px;
+      transition: background-color 0.3s ease;
+    }
+
+    .btn-warning-custom:hover {
+      background-color: #e0a800;
+    }
+  </style>
+</head>
+<body>
+<div class="top-bar">
+  <span>구매 발주 관리</span>
+  <div>
+    <a href="/main" class="text-white text-decoration-none me-3">홈</a>
+    <a href="/logout" class="text-white text-decoration-none">로그아웃</a>
+  </div>
+</div>
+
+<div class="container mt-4">
+  <div class="form-container">
+    <h3 class="mb-4">구매 발주 검색</h3>
+    <!-- 오류 메시지 추가 -->
+    <div th:if="${error}" class="alert alert-danger" role="alert">
+      <span th:text="${error}"></span>
+    </div>
+    <form id="searchForm" th:action="@{/purchase_order/search}" method="post">
+      <div class="row g-3">
+        <div class="col-md-3">
+          <label for="branch" class="form-label">지점</label>
+          <select class="form-select" id="branch" name="branch">
+            <option value="">선택하세요</option>
+            <option value="본사">본사</option>
+            <option value="안양">안양</option>
+            <option value="청주">청주</option>
+          </select>
+        </div>
+        <div class="col-md-3">
+          <label for="orderId" class="form-label">발주번호</label>
+          <input type="text" id="orderId" name="orderId" class="form-control" placeholder="발주번호">
+
+
+        </div>
+        <div class="col-md-3">
+          <label for="requesterName" class="form-label">사용자명</label>
+          <input type="text" id="requesterName" name="requesterName" class="form-control" placeholder="사용자명">
+        </div>
+        <div class="col-md-3 d-flex align-items-end">
+          <button type="submit" class="btn btn-primary w-100">조회</button>
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <div class="text-end mb-3">
+    <button class="btn btn-success-custom" data-bs-toggle="modal" data-bs-target="#addPurchaseOrderModal">추가</button>
+    <button class="btn btn-warning-custom" onclick="editSelected()">수정</button>
+    <button class="btn btn-danger" onclick="deleteSelected()">삭제</button>
+  </div>
+
+
+  <table class="table table-bordered table-hover mt-4">
+    <thead>
+      <tr>
+        <th>선택</th>
+        <th>발주번호</th>
+        <th>지점명</th>
+        <th>발주자 ID</th>
+        <th>발주자 이름</th>
+        <th>상태</th>
+        <th>등록일자</th>
+        <th>수정일자</th>
+        <th>수정자</th>
+      </tr>
+      </thead>
+    <tbody>
+    <tr th:if="${purchaseOrders != null and not #lists.isEmpty(purchaseOrders)}" th:each="order : ${purchaseOrders}">
+      <td><input type="checkbox" class="rowCheckbox" th:value="${order.orderId}"></td>
+      <td th:text="${order.orderId}"></td>
+      <td th:text="${order.branch}"></td>
+      <td th:text="${order.requesterId}"></td>
+      <td th:text="${order.requesterName}"></td>
+      <td th:text="${order.status}"></td>
+      <td th:text="${#temporals.format(order.registeredDate != null ? order.registeredDate : now(), 'yyyy-MM-dd')}"></td>
+      <td th:text="${#temporals.format(order.lastModified != null ? order.lastModified : now(), 'yyyy-MM-dd')}"></td>
+      <td th:text="${order.modifiedBy}"></td>
+    </tr>
+    </tbody>
+
+
+
+
+  </table>
+
+</div>
+
+
+
+<!-- 구매 발주 추가 모달 -->
+<div class="modal fade" id="addPurchaseOrderModal" tabindex="-1" aria-labelledby="addPurchaseOrderModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-xl">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="addPurchaseOrderModalLabel">구매 발주 추가</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="row">
+          <!-- 왼쪽: 발주 품목 테이블 -->
+          <div class="col-md-8">
+            <table class="table table-bordered table-striped">
+              <thead class="table-dark">
+              <tr>
+                <th>No</th>
+                <th>품목번호</th>
+                <th>상품명</th>
+                <th>가격</th>
+                <th>단위</th>
+                <th>최소 발주량</th>
+                <th>최대 발주량</th>
+                <th>발주수량</th>
+                <th>입고예정일</th>
+              </tr>
+              </thead>
+              <tbody id="productTableBody">
+              <!-- JavaScript에서 동적으로 데이터 추가 -->
+              </tbody>
+            </table>
+          </div>
+
+          <!-- 오른쪽: 발주 정보 -->
+          <div class="col-md-4">
+            <div class="border p-3 bg-light rounded">
+              <h5 class="mb-3">발주 정보</h5>
+              <div class="mb-2">
+                <label class="form-label">지점</label>
+                <input type="text" id="branchInfo" class="form-control" readonly>
+              </div>
+              <div class="mb-2">
+                <label class="form-label">발주번호</label>
+                <input type="text" id="orderId" class="form-control" readonly>
+              </div>
+              <div class="mb-2">
+                <label class="form-label">총 수량</label>
+                <input type="text" id="totalQuantity" class="form-control" readonly>
+              </div>
+              <div class="mb-2">
+                <label class="form-label">총 가격</label>
+                <input type="text" id="totalPrice" class="form-control" readonly>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer d-flex justify-content-end">
+        <button type="button" class="btn btn-success" onclick="submitOrder()">발주</button>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">닫기</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- 수정 모달 -->
+<!-- 수정 모달 -->
+<div class="modal fade" id="editProductModal" tabindex="-1" aria-labelledby="editProductModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="editProductModalLabel">품목 수정</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form id="editProductForm" th:action="@{/product_master/update}" method="post">
+        <div class="modal-body">
+          <input type="hidden" id="editMasterId" name="masterId">
+
+          <div class="mb-3">
+            <label for="editProductType" class="form-label">품목유형</label>
+            <select class="form-select" id="editProductType" name="productType">
+              <option value="BE">BE</option>
+              <option value="SN">SN</option>
+              <option value="TO">TO</option>
+              <option value="AL">AL</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label for="editProductCode" class="form-label">품목코드</label>
+            <input type="text" id="editProductCode" name="productCode" class="form-control" required oninput="checkEditProductCode()">
+            <div id="editProductCodeMessage" class="text-danger" style="display: none;">이미 사용 중인 품목코드입니다.</div>
+          </div>
+
+          <div class="mb-3">
+            <label for="editProductName" class="form-label">품목명</label>
+            <input type="text" id="editProductName" name="productName" class="form-control" required oninput="checkEditProductName()">
+            <div id="editProductNameMessage" class="text-danger" style="display: none;">이미 사용 중인 품목명입니다.</div>
+          </div>
+          <div class="mb-3">
+            <label for="editPrice" class="form-label">가격</label>
+            <input type="number" id="editPrice" name="price" class="form-control" required>
+          </div>
+          <div class="mb-3">
+            <label for="editUnit" class="form-label">단위</label>
+            <input type="text" id="editUnit" name="unit" class="form-control" required>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-primary">저장</button>
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">닫기</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    loadUserInfo(); // 로그인 정보 가져오기
+    loadProductData(); // 상품 데이터 로드
+
+    // 사용자가 직접 입력할 수 있도록 발주번호 자동 생성 막기
+    let orderIdField = document.getElementById("orderId");
+    if (!orderIdField || orderIdField.value.trim() !== "") {
+      return;  // 사용자가 직접 입력하는 경우 자동 생성 방지
+    }
+  });
+
+  // 🔥 로그인한 사용자 정보 가져오기
+  function loadUserInfo() {
+    fetch('/user/info')
+            .then(response => response.json())
+            .then(user => {
+              console.log("사용자 정보 응답:", user);
+              let branchField = document.getElementById("branchInfo");
+              if (branchField) {
+                branchField.value = user.branch || "지점 정보 없음";
+              }
+            })
+            .catch(error => console.error('사용자 정보를 불러오는 중 오류 발생:', error));
+  }
+
+
+  // 발주번호 생성
+  function generateOrderId() {
+    fetch('/purchase_order/generateOrderId')
+            .then(response => {
+              if (!response.ok) throw new Error("발주번호 생성 실패");
+              return response.json();
+            })
+            .then(data => {
+              console.log("✅ 생성된 발주번호:", data.orderId);
+              document.getElementById("orderId").value = data.orderId;
+            })
+            .catch(error => console.error("❌ 발주번호 생성 오류:", error));
+  }
+
+
+
+  // 🔥 상품 데이터 로드 및 UI에 표시
+  function loadProductData() {
+    fetch('/product_master/getAll')
+            .then(response => response.json())
+            .then(data => {
+              let tableBody = document.getElementById("productTableBody");
+              tableBody.innerHTML = ""; // 기존 데이터 초기화
+
+              data.forEach((product, index) => {
+                let today = new Date();
+                today.setDate(today.getDate() + 2); // 입고 예정일 +2일
+                let expectedDate = today.toISOString().split("T")[0];
+
+                let row = document.createElement("tr");
+                row.innerHTML = `
+                    <td>${index + 1}</td>
+                    <td>${product.productCode}</td>
+                    <td>${product.productName}</td>
+                    <td>${product.price.toLocaleString()}원</td>
+                    <td>${product.unit}</td>
+                    <td>1</td>
+                    <td>20</td>
+                    <td>
+                        <input type="number" class="form-control order-quantity" min="1" max="20" value="1"
+                               data-product-code="${product.productCode}" oninput="updateTotalValues()"/>
+                    </td>
+                    <td>${expectedDate}</td>
+                `;
+                tableBody.appendChild(row);
+              });
+            })
+            .catch(error => console.error('상품 데이터를 불러오는 중 오류 발생:', error));
+  }
+
+
+  // 🔥 총수량 및 총가격 자동 계산
+  function updateTotalValues() {
+    let totalQuantity = 0;
+    let totalPrice = 0;
+
+    document.querySelectorAll(".order-quantity").forEach(input => {
+      let quantity = parseInt(input.value) || 0;
+      let price = parseInt(input.closest("tr").cells[3].textContent.replace(/,/g, "").replace("원", "")) || 0;
+
+      totalQuantity += quantity;
+      totalPrice += quantity * price;
+    });
+
+    document.getElementById("totalQuantity").value = totalQuantity;
+    document.getElementById("totalPrice").value = totalPrice.toLocaleString() + "원";
+  }
+
+  // 🔥 발주 요청 전송
+  function submitOrder() {
+    let branchValue = document.getElementById("branchInfo").value.trim();
+    if (!branchValue) {
+      alert("지점 정보를 입력해주세요.");
+      return;
+    }
+
+    let orderItems = [];
+    document.querySelectorAll("#productTableBody tr").forEach(row => {
+      let productCode = row.cells[1].textContent.trim();
+      let productName = row.cells[2].textContent.trim();
+      let price = parseInt(row.cells[3].textContent.replace(/,/g, "").replace("원", ""));
+      let unit = row.cells[4].textContent.trim();
+      let orderQuantity = parseInt(row.cells[7].querySelector("input").value);
+
+      let expectedDate = new Date();
+      expectedDate.setDate(expectedDate.getDate() + 2);
+      expectedDate = expectedDate.toISOString().split("T")[0];
+
+      orderItems.push({
+        branch: branchValue,
+        productCode: productCode,
+        productName: productName,
+        price: price,
+        unit: unit,
+        minOrder: 1,
+        maxOrder: 20,
+        orderQuantity: orderQuantity,
+        expectedDate: expectedDate
+      });
+    });
+
+    fetch(`/purchase_order/create`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ branch: branchValue })  // body로 데이터를 전달해야 함
+    })
+            .then(response => response.json())
+            .then(data => {
+              let orderId = data.orderId;
+              let orderData = {
+                orderId: orderId,
+                branch: branchValue,
+                items: orderItems
+              };
+
+
+              return fetch('/purchase_order/add', {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(orderData)
+              });
+            })
+            .then(response => response.json())
+            .then(result => alert(result.message))
+            .catch(error => alert("오류 발생: " + error.message));
+  }
+
+
+</script>
+
+
+</body>
+</html>

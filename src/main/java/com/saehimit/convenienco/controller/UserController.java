@@ -3,6 +3,8 @@ package com.saehimit.convenienco.controller;
 import com.saehimit.convenienco.dto.UsersDto;
 import com.saehimit.convenienco.service.UserService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -109,6 +111,24 @@ public class UserController {
         userService.unlockAccount(loginId);
         return "redirect:/search";
     }
+
+    @GetMapping("/user/info")
+    public ResponseEntity<UsersDto> getUserInfo(Authentication authentication) {
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        String loginId = authentication.getName();
+        UsersDto user = userService.findByLoginId(loginId);
+
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
+
+        return ResponseEntity.ok(user);
+    }
+
+    
 
 
 }

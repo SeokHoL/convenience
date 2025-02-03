@@ -23,8 +23,9 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            font-size: 1.2rem;
+            font-size: 1.5rem;
             font-weight: bold;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
 
         .form-container {
@@ -68,72 +69,7 @@
             }
         }
     </style>
-    <script>
-        function validatePassword() {
-            const password = document.getElementById("password").value;
-            const confirmPassword = document.getElementById("confirmPassword").value;
-            const passwordError = document.getElementById("passwordError");
 
-            if (password !== confirmPassword) {
-                passwordError.style.display = "block"; // 에러 메시지 표시
-            } else {
-                passwordError.style.display = "none"; // 에러 메시지 숨김
-            }
-        }
-
-        function validateUserId() {
-            const loginId = document.getElementById("loginId").value;
-            const loginIdError = document.getElementById("loginIdError");
-
-            fetch(`/check/loginId?loginId=${encodeURIComponent(loginId)}`)
-                .then(response => response.json())
-                .then(data => {
-                    if (!data) {
-                        loginIdError.style.display = "block";
-                        loginIdError.textContent = "이미 사용 중인 아이디입니다.";
-                    } else {
-                        loginIdError.style.display = "none";
-                    }
-                });
-        }
-
-        function validateEmail() {
-            const email = document.getElementById("email").value;
-            const emailError = document.getElementById("emailError");
-
-            fetch(`/check/email?email=${encodeURIComponent(email)}`)
-                .then(response => response.json())
-                .then(data => {
-                    console.log('Server Response:', data); // 서버 응답을 확인
-                    if (!data) {
-                        emailError.style.display = "block";
-                        emailError.textContent = "이미 사용 중인 이메일입니다.";
-                    } else {
-                        emailError.style.display = "none";
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                });
-        }
-
-
-        function validatePhoneNumber() {
-            const phoneNumber = document.getElementById("phoneNumber").value;
-            const phoneError = document.getElementById("phoneError");
-
-            fetch(`/check/phone?phoneNumber=${encodeURIComponent(phoneNumber)}`)
-                .then(response => response.json())
-                .then(data => {
-                    if (!data) {
-                        phoneError.style.display = "block";
-                        phoneError.textContent = "이미 사용 중인 핸드폰 번호입니다.";
-                    } else {
-                        phoneError.style.display = "none";
-                    }
-                });
-        }
-    </script>
 </head>
 <body>
 <div class="top-bar">
@@ -209,5 +145,72 @@
         </div>
     </form>
 </div>
+
+<script>
+    function validatePassword() {
+        const password = document.getElementById("password").value;
+        const confirmPassword = document.getElementById("confirmPassword").value;
+        const passwordError = document.getElementById("passwordError");
+
+        if (password !== confirmPassword) {
+            passwordError.style.display = "block"; // 에러 메시지 표시
+        } else {
+            passwordError.style.display = "none"; // 에러 메시지 숨김
+        }
+    }
+
+    function validateUserId() {
+        const loginId = document.getElementById("loginId").value;
+        const loginIdError = document.getElementById("loginIdError");
+
+        fetch(`/check/loginId?loginId=${encodeURIComponent(loginId)}`)
+            .then(response => response.json())
+            .then(data => {
+                if (!data) {
+                    loginIdError.style.display = "block";
+                    loginIdError.textContent = "이미 사용 중인 아이디입니다.";
+                } else {
+                    loginIdError.style.display = "none";
+                }
+            });
+    }
+
+    function validateEmail() {
+        const email = document.getElementById("email").value;
+        const emailError = document.getElementById("emailError");
+
+        fetch(`/check/email?email=${encodeURIComponent(email)}`)
+            .then(response => response.json())
+            .then(data => {
+                console.log('Server Response:', data); // 서버 응답을 확인
+                if (!data) {
+                    emailError.style.display = "block";
+                    emailError.textContent = "이미 사용 중인 이메일입니다.";
+                } else {
+                    emailError.style.display = "none";
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+    }
+
+
+    function validatePhoneNumber() {
+        const phoneNumber = document.getElementById("phoneNumber").value;
+        const phoneError = document.getElementById("phoneError");
+
+        fetch(`/check/phone?phoneNumber=${encodeURIComponent(phoneNumber)}`)
+            .then(response => response.json())
+            .then(data => {
+                if (!data) {
+                    phoneError.style.display = "block";
+                    phoneError.textContent = "이미 사용 중인 핸드폰 번호입니다.";
+                } else {
+                    phoneError.style.display = "none";
+                }
+            });
+    }
+</script>
 </body>
 </html>
