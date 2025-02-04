@@ -1,5 +1,6 @@
 package com.saehimit.convenienco.controller;
 
+import com.saehimit.convenienco.details.CustomUserDetails;
 import com.saehimit.convenienco.dto.ProductMasterDto;
 import com.saehimit.convenienco.dto.PurchaseOrderDto;
 import com.saehimit.convenienco.dto.PurchaseOrderItemDto;
@@ -18,6 +19,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
+import java.security.Principal;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -46,13 +48,13 @@ public class PuchaseOrderController {
             Model model) {
 
         System.out.println("🔍 검색 실행 - branch: " + branch + ", orderId: " + orderId + ", requesterName: " + requesterName);
-
-        if (orderId != null) {
-            System.out.println("orderId 길이: " + orderId.length());
-            System.out.println("orderId의 HEX 값: " + orderId.chars()
-                    .mapToObj(c -> String.format("%02X", c))
-                    .reduce("", (a, b) -> a + " " + b));
-        }
+//
+//        if (orderId != null) {
+//            System.out.println("orderId 길이: " + orderId.length());
+//            System.out.println("orderId의 HEX 값: " + orderId.chars()
+//                    .mapToObj(c -> String.format("%02X", c))
+//                    .reduce("", (a, b) -> a + " " + b));
+//        }
 
         List<PurchaseOrderDto> purchaseOrders = purchaseOrderService.searchPurchaseOrders(branch, orderId, requesterName);
         System.out.println("검색된 데이터 개수: " + purchaseOrders.size());
@@ -75,33 +77,29 @@ public class PuchaseOrderController {
     }
 
     @PostMapping("/add")
-    public ResponseEntity<Map<String, String>> addPurchaseOrder(@RequestBody PurchaseOrderDto orderDto, @AuthenticationPrincipal UserDetails userDetails) {
-        if (userDetails == null) {
+    public ResponseEntity<Map<String, String>> addPurchaseOrder(
+            @RequestBody PurchaseOrderDto orderDto,
+            @AuthenticationPrincipal CustomUserDetails userDetails) { // 🔥 CustomUserDetails로 변경
+
+        if (userDetails == null) { // 🔥 방어 코드 추가
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(Map.of("error", "로그인이 필요합니다."));
         }
 
-        String requesterId = userDetails.getUsername();
-        String requesterName = userService.getUserNameById(requesterId);
+        String requesterId = userDetails.getLoginId();  // 🔥 여기서 NullPointerException 발생 가능
+        String requesterName = userDetails.getRealUsername();
         String branch = userService.getBranchByUserId(requesterId);
 
-        if (orderDto.getRequesterId() == null) {
-            orderDto.setRequesterId(requesterId);
-        }
-
-        if (orderDto.getRequesterName() == null) {
-            orderDto.setRequesterName(requesterName);
-        }
-
-        if (orderDto.getBranch() == null) {
-            orderDto.setBranch(branch);
-        }
-
+        orderDto.setRequesterId(requesterId);
+        orderDto.setRequesterName(requesterName);
+        orderDto.setBranch(branch);
+        
+        //발주등록
         purchaseOrderService.addPurchaseOrder(orderDto);
 
-        //  JSON 형식의 응답 반환
         return ResponseEntity.ok(Map.of("message", "발주가 성공적으로 등록되었습니다."));
     }
+
 
 
 

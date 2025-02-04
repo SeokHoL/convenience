@@ -223,9 +223,10 @@
                 <th>단위</th>
                 <th>최소 발주량</th>
                 <th>최대 발주량</th>
+                <th>선택</th>
                 <th>발주수량</th>
                 <th>입고예정일</th>
-                <th>선택</th>
+
               </tr>
               </thead>
               <tbody id="productTableBody">
@@ -325,11 +326,12 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
 <script>
   document.addEventListener("DOMContentLoaded", function () {
-    loadUserInfo(); // 로그인 정보 가져오기
+
     loadProductData(); // 상품 데이터 로드
 
     // 모달이 열릴 때 발주번호 자동 생성
     document.getElementById("addPurchaseOrderModal").addEventListener("show.bs.modal", function () {
+      loadUserInfo(); // 로그인 정보 가져오기
       let orderIdField = document.getElementById("orderId");
 
       if (!orderIdField || orderIdField.value.trim() === "") {
@@ -339,27 +341,40 @@
       }
     });
   });
-  // 🔥 로그인한 사용자 정보 가져오기
+
+  // 로그인한 사용자 정보 가져오기
   function loadUserInfo() {
     fetch('/user/info')
-            .then(response => response.json())
+            .then(response => {
+              if (!response.ok) {
+                throw new Error(`HTTP error! Status: ${response.status}`);
+              }
+              return response.json();
+            })
             .then(user => {
               console.log("사용자 정보 응답:", user);
 
-              let branchField = document.getElementById("branchInfo");
-              if (branchField) {
-                if (user.branch && user.branch.trim() !== "") {
-                  branchField.value = user.branch;
-                  console.log("설정된 지점 정보:", user.branch);
-                } else {
-                  console.error("오류: 사용자 지점 정보가 없습니다.");
-                }
+              // 브라우저에서 요소를 제대로 찾는지 확인
+              const branchElement = document.getElementById("branchInfo");
+              if (branchElement) {
+                branchElement.value = user.branch ? user.branch : "지점 정보 없음";  // `innerText` → `value`
+                console.log("설정된 branch 값:", branchElement.value);
               } else {
-                console.error("오류: branchInfo 필드를 찾을 수 없습니다.");
+                console.warn("'branchInfo' 요소를 찾을 수 없음!");
               }
             })
             .catch(error => console.error('사용자 정보를 불러오는 중 오류 발생:', error));
   }
+
+
+  // 페이지가 로드될 때 사용자 정보를 불러옴
+  // document.addEventListener("DOMContentLoaded", function () {
+  //   loadUserInfo();
+  // });
+
+
+
+
 
 
   // 발주번호 생성
@@ -367,12 +382,11 @@
     fetch('/purchase_order/generateOrderId')
             .then(response => response.json())
             .then(data => {
-              let modalOrderIdField = document.querySelector("#addPurchaseOrderModal #orderId"); // 모달 내부의 orderId 선택
+              let modalOrderIdField = document.querySelector("#addPurchaseOrderModal #orderId");
               if (modalOrderIdField) {
                 modalOrderIdField.value = data.orderId;
-                modalOrderIdField.dispatchEvent(new Event('change'));  // 값 변경 이벤트 발생
-                console.log(" 생성된 발주번호:", data.orderId);
-                console.log("설정된 orderId 값 (모달):", modalOrderIdField.value);
+                modalOrderIdField.dispatchEvent(new Event('change'));
+                console.log("생성된 발주번호:", data.orderId);
               } else {
                 console.error("오류: 모달 내 orderId 입력 필드를 찾을 수 없습니다.");
               }
@@ -384,18 +398,19 @@
 
 
 
+
   // 상품 데이터 로드 및 UI에 표시
   function loadProductData() {
     fetch('/product_master/getAll')
             .then(response => response.json())
             .then(data => {
-              console.log("상품 데이터 응답:", data); // API 응답 확인용 로그 추가
+              // console.log("상품 데이터 응답:", data);
 
               let tableBody = document.getElementById("productTableBody");
-              tableBody.innerHTML = ""; // 기존 데이터 초기화
+              tableBody.innerHTML = "";
 
               if (!data || data.length === 0) {
-                console.warn("⚠ 상품 데이터가 비어 있습니다.");
+                console.warn("상품 데이터가 비어 있습니다.");
                 tableBody.innerHTML = "<tr><td colspan='10'>상품 데이터가 없습니다.</td></tr>";
                 return;
               }
@@ -414,17 +429,28 @@
                     <td>${product.unit}</td>
                     <td>0</td>
                     <td>20</td>
+                    <td><input type="checkbox" class="order-checkbox" data-product-code="${product.productCode}"></td>
                     <td>
                         <input type="number" class="form-control order-quantity" min="0" max="20" value="0"
-                               data-product-code="${product.productCode}" oninput="updateTotalValues()"/>
+                               data-product-code="${product.productCode}" />
                     </td>
                     <td>${expectedDate}</td>
-                    <td><input type="checkbox" class="order-checkbox" data-product-code="${product.productCode}"></td>
                 `;
+
                 tableBody.appendChild(row);
               });
 
-              console.log("상품 목록이 테이블에 추가되었습니다."); // 디버깅용 로그 추가
+              // 체크박스 클릭 시 updateTotalValues() 실행하도록 이벤트 추가
+              document.querySelectorAll(".order-checkbox").forEach(checkbox => {
+                checkbox.addEventListener("change", updateTotalValues);
+              });
+
+              // 수량 입력 시 updateTotalValues() 실행하도록 이벤트 추가
+              document.querySelectorAll(".order-quantity").forEach(input => {
+                input.addEventListener("input", updateTotalValues);
+              });
+
+              console.log("상품 목록이 테이블에 추가되었습니다.");
             })
             .catch(error => console.error("상품 데이터를 불러오는 중 오류 발생:", error));
   }
@@ -435,28 +461,49 @@
     let totalQuantity = 0;
     let totalPrice = 0;
 
-    document.querySelectorAll(".order-quantity").forEach(input => {
-      let quantity = parseInt(input.value) || 0;
-      let price = parseInt(input.closest("tr").cells[3].textContent.replace(/,/g, "").replace("원", "")) || 0;
+    document.querySelectorAll("#productTableBody tr").forEach(row => {
+      let checkbox = row.cells[7].querySelector(".order-checkbox"); // ✅ 변경된 인덱스 유지
+      let quantityInput = row.cells[8].querySelector("input"); // ✅ 변경된 인덱스 유지
 
-      totalQuantity += quantity;
-      totalPrice += quantity * price;
-    });
+      let quantity = parseInt(quantityInput.value) || 0;
+      let price = parseInt(row.cells[3].textContent.replace(/,/g, "").replace("원", "")) || 0;
 
-    // "구매 발주 추가" 모달이 열릴 때만 발주번호 자동 생성
-    document.getElementById("addPurchaseOrderModal").addEventListener("show.bs.modal", function () {
-      let orderIdField = document.querySelector("#addPurchaseOrderModal #orderId");
-
-      // 기존 발주번호가 없을 때만 자동 생성
-      if (!orderIdField.value || orderIdField.value.trim() === "") {
-        generateOrderId();
+      if (checkbox.checked) {  // ✅ 체크된 항목만 계산
+        totalQuantity += quantity;
+        totalPrice += quantity * price;
       }
     });
 
+    let totalQuantityField = document.getElementById("totalQuantity");
+    let totalPriceField = document.getElementById("totalPrice");
 
-    document.getElementById("totalQuantity").value = totalQuantity;
-    document.getElementById("totalPrice").value = totalPrice.toLocaleString() + "원";
+    if (totalQuantityField) {
+      totalQuantityField.value = totalQuantity;
+    } else {
+      console.error("오류: #totalQuantity 요소를 찾을 수 없습니다.");
+    }
+
+    if (totalPriceField) {
+      totalPriceField.value = totalPrice.toLocaleString() + "원";
+    } else {
+      console.error("오류: #totalPrice 요소를 찾을 수 없습니다.");
+    }
   }
+
+
+  // "구매 발주 추가" 모달이 열릴 때만 발주번호 자동 생성
+  document.getElementById("addPurchaseOrderModal").addEventListener("show.bs.modal", function () {
+    let orderIdField = document.querySelector("#addPurchaseOrderModal #orderId");
+
+    // 기존 발주번호가 없을 때만 자동 생성
+    if (!orderIdField.value || orderIdField.value.trim() === "") {
+      generateOrderId();
+    }
+  });
+  function generateOrderId() {
+    return 'PO' + new Date().toISOString().slice(0, 10).replace(/-/g, '') + '-' + Math.floor(Math.random() * 100000);
+  }
+
 
   // 발주 요청 전송
   function submitOrder() {
@@ -484,15 +531,19 @@
       orderId: orderIdValue,
       branch: branchValue,
       items: [...document.querySelectorAll("#productTableBody tr")].map(row => {
-        let checkbox = row.cells[9].querySelector(".order-checkbox");
+        let checkbox = row.cells[7].querySelector(".order-checkbox");
         if (checkbox.checked) {
+          let orderQuantity = parseInt(row.cells[8].querySelector("input").value) || 0;
+          let maxOrder = parseInt(row.cells[6].textContent) || 0;  //  maxOrder 값을 가져오도록 수정
+
           return {
             productCode: row.cells[1].textContent.trim(),
             productName: row.cells[2].textContent.trim(),
             price: parseInt(row.cells[3].textContent.replace(/,/g, "").replace("원", "")),
             unit: row.cells[4].textContent.trim(),
-            orderQuantity: parseInt(row.cells[7].querySelector("input").value),
-            expectedDate: row.cells[8].textContent.trim()
+            orderQuantity: orderQuantity,
+            maxOrder: maxOrder,  // maxOrder 값을 포함하도록 수정
+            expectedDate: row.cells[9].textContent.trim()
           };
         }
       }).filter(item => item !== undefined)
@@ -518,45 +569,6 @@
             });
   }
 
-  // 발주 데이터 전송 함수 분리
-  // function sendOrderData(orderId, branch) {
-  //   let orderData = {
-  //     orderId: orderId,
-  //     branch: branch || "본사",  // 기본값 설정
-  //     items: [...document.querySelectorAll("#productTableBody tr")].map(row => {
-  //       let checkbox = row.cells[9].querySelector(".order-checkbox");
-  //       if (checkbox.checked) {
-  //         return {
-  //           productCode: row.cells[1].textContent.trim(),
-  //           productName: row.cells[2].textContent.trim(),
-  //           price: parseInt(row.cells[3].textContent.replace(/,/g, "").replace("원", "")),
-  //           unit: row.cells[4].textContent.trim(),
-  //           orderQuantity: parseInt(row.cells[7].querySelector("input").value),
-  //           expectedDate: row.cells[8].textContent.trim()
-  //         };
-  //       }
-  //     }).filter(item => item !== undefined)
-  //   };
-  //
-  //   console.log("전송할 발주 데이터:", JSON.stringify(orderData, null, 2));
-  //
-  //   fetch('/purchase_order/add', {
-  //     method: "POST",
-  //     headers: { "Content-Type": "application/json" },
-  //     body: JSON.stringify(orderData)
-  //   })
-  //           .then(response => response.json())
-  //           .then(result => {
-  //             console.log("서버 응답:", result);
-  //             alert(result.message);
-  //             let modal = bootstrap.Modal.getInstance(document.getElementById("addPurchaseOrderModal"));
-  //             modal.hide();
-  //           })
-  //           .catch(error => {
-  //             console.error("오류 발생:", error);
-  //             alert("오류 발생: " + error.message);
-  //           });
-  // }
 
 
 

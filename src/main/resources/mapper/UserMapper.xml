@@ -11,9 +11,10 @@
         VALUES (#{loginId}, #{password}, #{role}, #{username})
     </insert>
 
-    <select id="findByLoginId" parameterType="string" resultType="com.saehimit.convenienco.dto.UsersDto">
+    <select id="findByLoginId" parameterType="String" resultType="com.saehimit.convenienco.dto.UsersDto">
         SELECT * FROM users WHERE login_id = #{loginId}
     </select>
+
 
     <insert id="saveUser" parameterType="com.saehimit.convenienco.dto.UsersDto">
         INSERT INTO users (
@@ -109,7 +110,7 @@
     </select>
 
     <select id="findBranchByUserId" resultType="String">
-        SELECT branch  FROM users WHERE login_id = #{userId}
+        SELECT branch FROM users WHERE login_id = #{userId}
     </select>
 
 

@@ -46,12 +46,12 @@ public class PurchaseOrderService {
         LocalDate today = LocalDate.now();
         String datePart = today.format(DateTimeFormatter.ofPattern("yyyyMMdd"));
 
-        Random random = new Random();
-        int randomNumber = 10000 + random.nextInt(90000); // 10000 ~ 99999 사이 랜덤 숫자
+        // 가장 최근의 발주번호 숫자 조회
+        Integer lastOrderNumber = purchaseOrderMapper.getLastOrderNumber();
+        int nextOrderNumber = (lastOrderNumber != null) ? lastOrderNumber + 1 : 10001;
 
-        return "PO" + datePart + "-" + randomNumber;
+        return "PO" + datePart + "-" + nextOrderNumber;
     }
-
     @Transactional
     public String createNewOrder(String branch, String requesterId, String requesterName) {
         PurchaseOrderDto newOrder = new PurchaseOrderDto();

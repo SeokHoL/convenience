@@ -39,10 +39,10 @@ public class UsersDto implements UserDetails {
         return List.of(new SimpleGrantedAuthority(role));
     }
 
-    @Override
-    public String getUsername() {
-        return loginId; // 반드시 loginId를 반환하도록 설정
-    }
+//    @Override
+//    public String getUsername() {
+//        return loginId; // 반드시 loginId를 반환하도록 설정
+//    }
 
     @Override
     public boolean isAccountNonExpired() {

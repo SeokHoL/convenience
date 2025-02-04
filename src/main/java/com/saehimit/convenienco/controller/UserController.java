@@ -1,11 +1,13 @@
 package com.saehimit.convenienco.controller;
 
+import com.saehimit.convenienco.details.CustomUserDetails;
 import com.saehimit.convenienco.dto.UsersDto;
 import com.saehimit.convenienco.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Controller;
@@ -13,7 +15,9 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Controller
 @RequiredArgsConstructor
@@ -113,22 +117,31 @@ public class UserController {
     }
 
     @GetMapping("/user/info")
-    public ResponseEntity<UsersDto> getUserInfo(Authentication authentication) {
+    public ResponseEntity<Map<String, Object>> getUserInfo(Authentication authentication) {
         if (authentication == null || !authentication.isAuthenticated()) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
 
-        String loginId = authentication.getName();
+        CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+        String loginId = userDetails.getLoginId(); //  loginId 가져오기
+        String realUsername = userDetails.getRealUsername();
         UsersDto user = userService.findByLoginId(loginId);
 
         if (user == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
 
-        return ResponseEntity.ok(user);
+        //  loginId와 username을 분리하여 반환
+        Map<String, Object> response = new HashMap<>();
+        response.put("loginId", user.getLoginId());
+        response.put("username", realUsername);
+        response.put("branch", user.getBranch() != null ? user.getBranch() : "지점 정보 없음");
+
+        return ResponseEntity.ok(response);
     }
 
-    
+
+
 
 
 }

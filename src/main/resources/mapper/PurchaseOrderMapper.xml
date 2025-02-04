@@ -38,6 +38,12 @@
         </if>
     </select>
 
+    <!-- 가장 최근의 발주번호의 숫자 부분 조회 -->
+    <select id="getLastOrderNumber" resultType="Integer">
+        SELECT COALESCE(MAX(CAST(SUBSTRING_INDEX(order_id, '-', -1) AS UNSIGNED)), 10000) FROM purchase_order
+    </select>
+
+
 
 
 

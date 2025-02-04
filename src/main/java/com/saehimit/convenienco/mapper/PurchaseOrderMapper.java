@@ -20,4 +20,6 @@ public interface PurchaseOrderMapper {
     List<PurchaseOrderDto> getAllPurchaseOrders();
 
     PurchaseOrderDto findByOrderId(String orderId);
+
+    Integer getLastOrderNumber();  // 가장 마지막 발주번호 숫자 조회 추가
 }

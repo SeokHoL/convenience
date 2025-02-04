@@ -40,7 +40,7 @@ public class SecurityConfig {
                         // 정적 리소스 접근 허용
                         .requestMatchers("/css/**", "/js/**", "/images/**", "/resources/**").permitAll()
                         // 로그인, 에러 페이지 접근 허용
-                        .requestMatchers("/login", "/login?error", "/error").permitAll()
+                        .requestMatchers("/login", "/login?error", "/error","/user/info").permitAll()
                         // 관리자 전용 페이지
                         .requestMatchers("/register","system_management/**","/search").hasRole("ADMIN")
                         // 인증된 사용자 페이지
@@ -51,7 +51,7 @@ public class SecurityConfig {
                 .formLogin((form) -> form
                         .loginPage("/login")
                         .loginProcessingUrl("/login")
-                        .usernameParameter("username")
+                        .usernameParameter("loginId")
                         .passwordParameter("password")
                         .successHandler(customSuccessHandler) // 로그인 성공 핸들러
                         .failureHandler(customFailureHandler) // 로그인 실패 핸들러
