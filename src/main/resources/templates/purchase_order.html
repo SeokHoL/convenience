@@ -92,6 +92,25 @@
     .btn-warning-custom:hover {
       background-color: #e0a800;
     }
+
+    /* 모달 크기 조정 */
+    .modal-xl {
+      max-width: 95%;
+    }
+
+    /* 버튼을 네모 형태로 변경 */
+    .btn-lg {
+      border-radius: 5px;
+      padding: 10px 20px;
+      font-size: 1.2rem;
+      font-weight: bold;
+    }
+
+    /* 최소 발주량을 0으로 변경 */
+    .order-quantity {
+      min: 0 !important;
+    }
+
   </style>
 </head>
 <body>
@@ -184,7 +203,7 @@
 
 <!-- 구매 발주 추가 모달 -->
 <div class="modal fade" id="addPurchaseOrderModal" tabindex="-1" aria-labelledby="addPurchaseOrderModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-xl">
+  <div class="modal-dialog modal-xl" style="max-width: 95%;">
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title" id="addPurchaseOrderModalLabel">구매 발주 추가</h5>
@@ -206,6 +225,7 @@
                 <th>최대 발주량</th>
                 <th>발주수량</th>
                 <th>입고예정일</th>
+                <th>선택</th>
               </tr>
               </thead>
               <tbody id="productTableBody">
@@ -224,7 +244,9 @@
               </div>
               <div class="mb-2">
                 <label class="form-label">발주번호</label>
-                <input type="text" id="orderId" class="form-control" readonly>
+                <input type="text" id="orderId" class="form-control" >
+
+
               </div>
               <div class="mb-2">
                 <label class="form-label">총 수량</label>
@@ -239,15 +261,16 @@
         </div>
       </div>
       <div class="modal-footer d-flex justify-content-end">
-        <button type="button" class="btn btn-success" onclick="submitOrder()">발주</button>
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">닫기</button>
+        <button type="button" class="btn btn-success btn-lg square-button" onclick="submitOrder()">발주</button>
+        <button type="button" class="btn btn-secondary btn-lg square-button" data-bs-dismiss="modal">닫기</button>
       </div>
     </div>
   </div>
 </div>
 
 
-<!-- 수정 모달 -->
+
+
 <!-- 수정 모달 -->
 <div class="modal fade" id="editProductModal" tabindex="-1" aria-labelledby="editProductModalLabel" aria-hidden="true">
   <div class="modal-dialog">
@@ -305,22 +328,34 @@
     loadUserInfo(); // 로그인 정보 가져오기
     loadProductData(); // 상품 데이터 로드
 
-    // 사용자가 직접 입력할 수 있도록 발주번호 자동 생성 막기
-    let orderIdField = document.getElementById("orderId");
-    if (!orderIdField || orderIdField.value.trim() !== "") {
-      return;  // 사용자가 직접 입력하는 경우 자동 생성 방지
-    }
-  });
+    // 모달이 열릴 때 발주번호 자동 생성
+    document.getElementById("addPurchaseOrderModal").addEventListener("show.bs.modal", function () {
+      let orderIdField = document.getElementById("orderId");
 
+      if (!orderIdField || orderIdField.value.trim() === "") {
+        generateOrderIdForModal();
+      } else {
+        console.log("기존 발주번호 유지:", orderIdField.value);
+      }
+    });
+  });
   // 🔥 로그인한 사용자 정보 가져오기
   function loadUserInfo() {
     fetch('/user/info')
             .then(response => response.json())
             .then(user => {
               console.log("사용자 정보 응답:", user);
+
               let branchField = document.getElementById("branchInfo");
               if (branchField) {
-                branchField.value = user.branch || "지점 정보 없음";
+                if (user.branch && user.branch.trim() !== "") {
+                  branchField.value = user.branch;
+                  console.log("설정된 지점 정보:", user.branch);
+                } else {
+                  console.error("오류: 사용자 지점 정보가 없습니다.");
+                }
+              } else {
+                console.error("오류: branchInfo 필드를 찾을 수 없습니다.");
               }
             })
             .catch(error => console.error('사용자 정보를 불러오는 중 오류 발생:', error));
@@ -328,32 +363,46 @@
 
 
   // 발주번호 생성
-  function generateOrderId() {
+  function generateOrderIdForModal() {
     fetch('/purchase_order/generateOrderId')
-            .then(response => {
-              if (!response.ok) throw new Error("발주번호 생성 실패");
-              return response.json();
-            })
+            .then(response => response.json())
             .then(data => {
-              console.log("✅ 생성된 발주번호:", data.orderId);
-              document.getElementById("orderId").value = data.orderId;
+              let modalOrderIdField = document.querySelector("#addPurchaseOrderModal #orderId"); // 모달 내부의 orderId 선택
+              if (modalOrderIdField) {
+                modalOrderIdField.value = data.orderId;
+                modalOrderIdField.dispatchEvent(new Event('change'));  // 값 변경 이벤트 발생
+                console.log(" 생성된 발주번호:", data.orderId);
+                console.log("설정된 orderId 값 (모달):", modalOrderIdField.value);
+              } else {
+                console.error("오류: 모달 내 orderId 입력 필드를 찾을 수 없습니다.");
+              }
             })
-            .catch(error => console.error("❌ 발주번호 생성 오류:", error));
+            .catch(error => console.error("모달 발주번호 생성 오류:", error));
   }
 
 
 
-  // 🔥 상품 데이터 로드 및 UI에 표시
+
+
+  // 상품 데이터 로드 및 UI에 표시
   function loadProductData() {
     fetch('/product_master/getAll')
             .then(response => response.json())
             .then(data => {
+              console.log("상품 데이터 응답:", data); // API 응답 확인용 로그 추가
+
               let tableBody = document.getElementById("productTableBody");
               tableBody.innerHTML = ""; // 기존 데이터 초기화
 
+              if (!data || data.length === 0) {
+                console.warn("⚠ 상품 데이터가 비어 있습니다.");
+                tableBody.innerHTML = "<tr><td colspan='10'>상품 데이터가 없습니다.</td></tr>";
+                return;
+              }
+
               data.forEach((product, index) => {
                 let today = new Date();
-                today.setDate(today.getDate() + 2); // 입고 예정일 +2일
+                today.setDate(today.getDate() + 2);
                 let expectedDate = today.toISOString().split("T")[0];
 
                 let row = document.createElement("tr");
@@ -363,22 +412,25 @@
                     <td>${product.productName}</td>
                     <td>${product.price.toLocaleString()}원</td>
                     <td>${product.unit}</td>
-                    <td>1</td>
+                    <td>0</td>
                     <td>20</td>
                     <td>
-                        <input type="number" class="form-control order-quantity" min="1" max="20" value="1"
+                        <input type="number" class="form-control order-quantity" min="0" max="20" value="0"
                                data-product-code="${product.productCode}" oninput="updateTotalValues()"/>
                     </td>
                     <td>${expectedDate}</td>
+                    <td><input type="checkbox" class="order-checkbox" data-product-code="${product.productCode}"></td>
                 `;
                 tableBody.appendChild(row);
               });
+
+              console.log("상품 목록이 테이블에 추가되었습니다."); // 디버깅용 로그 추가
             })
-            .catch(error => console.error('상품 데이터를 불러오는 중 오류 발생:', error));
+            .catch(error => console.error("상품 데이터를 불러오는 중 오류 발생:", error));
   }
 
 
-  // 🔥 총수량 및 총가격 자동 계산
+  // 총수량 및 총가격 자동 계산
   function updateTotalValues() {
     let totalQuantity = 0;
     let totalPrice = 0;
@@ -391,68 +443,123 @@
       totalPrice += quantity * price;
     });
 
+    // "구매 발주 추가" 모달이 열릴 때만 발주번호 자동 생성
+    document.getElementById("addPurchaseOrderModal").addEventListener("show.bs.modal", function () {
+      let orderIdField = document.querySelector("#addPurchaseOrderModal #orderId");
+
+      // 기존 발주번호가 없을 때만 자동 생성
+      if (!orderIdField.value || orderIdField.value.trim() === "") {
+        generateOrderId();
+      }
+    });
+
+
     document.getElementById("totalQuantity").value = totalQuantity;
     document.getElementById("totalPrice").value = totalPrice.toLocaleString() + "원";
   }
 
-  // 🔥 발주 요청 전송
+  // 발주 요청 전송
   function submitOrder() {
-    let branchValue = document.getElementById("branchInfo").value.trim();
-    if (!branchValue) {
-      alert("지점 정보를 입력해주세요.");
+    let branchField = document.getElementById("branchInfo");
+    let branchValue = branchField ? branchField.value.trim() : "";
+    let orderIdField = document.querySelector("#addPurchaseOrderModal #orderId");
+    let orderIdValue = orderIdField ? orderIdField.value.trim() : "";
+
+    console.log("UI에서 가져온 지점명:", branchValue);
+    console.log("현재 발주번호:", orderIdValue);
+
+    if (!branchValue || branchValue === "") {
+      alert("지점 정보가 없습니다. 다시 로그인해 주세요.");
+      console.error("오류: branch 값이 존재하지 않음.");
       return;
     }
 
-    let orderItems = [];
-    document.querySelectorAll("#productTableBody tr").forEach(row => {
-      let productCode = row.cells[1].textContent.trim();
-      let productName = row.cells[2].textContent.trim();
-      let price = parseInt(row.cells[3].textContent.replace(/,/g, "").replace("원", ""));
-      let unit = row.cells[4].textContent.trim();
-      let orderQuantity = parseInt(row.cells[7].querySelector("input").value);
+    if (!orderIdValue || orderIdValue.trim() === "") {
+      alert("발주번호가 없습니다. 다시 시도해주세요.");
+      console.error("오류: orderId가 존재하지 않음.");
+      return;
+    }
 
-      let expectedDate = new Date();
-      expectedDate.setDate(expectedDate.getDate() + 2);
-      expectedDate = expectedDate.toISOString().split("T")[0];
+    let orderData = {
+      orderId: orderIdValue,
+      branch: branchValue,
+      items: [...document.querySelectorAll("#productTableBody tr")].map(row => {
+        let checkbox = row.cells[9].querySelector(".order-checkbox");
+        if (checkbox.checked) {
+          return {
+            productCode: row.cells[1].textContent.trim(),
+            productName: row.cells[2].textContent.trim(),
+            price: parseInt(row.cells[3].textContent.replace(/,/g, "").replace("원", "")),
+            unit: row.cells[4].textContent.trim(),
+            orderQuantity: parseInt(row.cells[7].querySelector("input").value),
+            expectedDate: row.cells[8].textContent.trim()
+          };
+        }
+      }).filter(item => item !== undefined)
+    };
 
-      orderItems.push({
-        branch: branchValue,
-        productCode: productCode,
-        productName: productName,
-        price: price,
-        unit: unit,
-        minOrder: 1,
-        maxOrder: 20,
-        orderQuantity: orderQuantity,
-        expectedDate: expectedDate
-      });
-    });
+    console.log("서버로 전송할 발주 데이터:", JSON.stringify(orderData, null, 2));
 
-    fetch(`/purchase_order/create`, {
+    fetch('/purchase_order/add', {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ branch: branchValue })  // body로 데이터를 전달해야 함
+      body: JSON.stringify(orderData)
     })
             .then(response => response.json())
-            .then(data => {
-              let orderId = data.orderId;
-              let orderData = {
-                orderId: orderId,
-                branch: branchValue,
-                items: orderItems
-              };
-
-
-              return fetch('/purchase_order/add', {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(orderData)
-              });
+            .then(result => {
+              console.log("서버 응답:", result);
+              alert(result.message);
+              let modal = bootstrap.Modal.getInstance(document.getElementById("addPurchaseOrderModal"));
+              modal.hide();
             })
-            .then(response => response.json())
-            .then(result => alert(result.message))
-            .catch(error => alert("오류 발생: " + error.message));
+            .catch(error => {
+              console.error("오류 발생:", error);
+              alert("오류 발생: " + error.message);
+            });
   }
+
+  // 발주 데이터 전송 함수 분리
+  // function sendOrderData(orderId, branch) {
+  //   let orderData = {
+  //     orderId: orderId,
+  //     branch: branch || "본사",  // 기본값 설정
+  //     items: [...document.querySelectorAll("#productTableBody tr")].map(row => {
+  //       let checkbox = row.cells[9].querySelector(".order-checkbox");
+  //       if (checkbox.checked) {
+  //         return {
+  //           productCode: row.cells[1].textContent.trim(),
+  //           productName: row.cells[2].textContent.trim(),
+  //           price: parseInt(row.cells[3].textContent.replace(/,/g, "").replace("원", "")),
+  //           unit: row.cells[4].textContent.trim(),
+  //           orderQuantity: parseInt(row.cells[7].querySelector("input").value),
+  //           expectedDate: row.cells[8].textContent.trim()
+  //         };
+  //       }
+  //     }).filter(item => item !== undefined)
+  //   };
+  //
+  //   console.log("전송할 발주 데이터:", JSON.stringify(orderData, null, 2));
+  //
+  //   fetch('/purchase_order/add', {
+  //     method: "POST",
+  //     headers: { "Content-Type": "application/json" },
+  //     body: JSON.stringify(orderData)
+  //   })
+  //           .then(response => response.json())
+  //           .then(result => {
+  //             console.log("서버 응답:", result);
+  //             alert(result.message);
+  //             let modal = bootstrap.Modal.getInstance(document.getElementById("addPurchaseOrderModal"));
+  //             modal.hide();
+  //           })
+  //           .catch(error => {
+  //             console.error("오류 발생:", error);
+  //             alert("오류 발생: " + error.message);
+  //           });
+  // }
+
+
+
 
 
 </script>

@@ -11,7 +11,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -46,14 +48,14 @@ public class PuchaseOrderController {
         System.out.println("🔍 검색 실행 - branch: " + branch + ", orderId: " + orderId + ", requesterName: " + requesterName);
 
         if (orderId != null) {
-            System.out.println("✅ orderId 길이: " + orderId.length());
-            System.out.println("✅ orderId의 HEX 값: " + orderId.chars()
+            System.out.println("orderId 길이: " + orderId.length());
+            System.out.println("orderId의 HEX 값: " + orderId.chars()
                     .mapToObj(c -> String.format("%02X", c))
                     .reduce("", (a, b) -> a + " " + b));
         }
 
         List<PurchaseOrderDto> purchaseOrders = purchaseOrderService.searchPurchaseOrders(branch, orderId, requesterName);
-        System.out.println("🔎 검색된 데이터 개수: " + purchaseOrders.size());
+        System.out.println("검색된 데이터 개수: " + purchaseOrders.size());
 
         model.addAttribute("purchaseOrders", purchaseOrders);
         model.addAttribute("orderId", orderId);
@@ -64,27 +66,44 @@ public class PuchaseOrderController {
 
 
 
-
+    @GetMapping("/generateOrderId")
+    public ResponseEntity<Map<String, String>> generateOrderId() {
+        String orderId = purchaseOrderService.generateOrderId();
+        PurchaseOrderDto newOrder = new PurchaseOrderDto();
+        newOrder.setOrderId(orderId);
+        return ResponseEntity.ok(Map.of("orderId", orderId));
+    }
 
     @PostMapping("/add")
-    public ResponseEntity<?> addPurchaseOrder(@RequestBody PurchaseOrderDto newOrder) {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        String username = auth.getName();  // 로그인된 사용자 ID 가져오기
-
-        // 기존 발주번호가 없으면 새로 생성
-        if (newOrder.getOrderId() == null || newOrder.getOrderId().isEmpty()) {
-            newOrder.setOrderId(purchaseOrderService.generateOrderId());
+    public ResponseEntity<Map<String, String>> addPurchaseOrder(@RequestBody PurchaseOrderDto orderDto, @AuthenticationPrincipal UserDetails userDetails) {
+        if (userDetails == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("error", "로그인이 필요합니다."));
         }
 
-        newOrder.setRequesterId(username);
-        newOrder.setRequesterName("관리자"); // 관리자 임시 지정
-        if (newOrder.getStatus() == null || newOrder.getStatus().isEmpty()) {
-            newOrder.setStatus("미승인");
+        String requesterId = userDetails.getUsername();
+        String requesterName = userService.getUserNameById(requesterId);
+        String branch = userService.getBranchByUserId(requesterId);
+
+        if (orderDto.getRequesterId() == null) {
+            orderDto.setRequesterId(requesterId);
         }
 
-        purchaseOrderService.addPurchaseOrder(newOrder);
-        return ResponseEntity.ok(Map.of("message", "발주가 정상적으로 처리되었습니다."));
+        if (orderDto.getRequesterName() == null) {
+            orderDto.setRequesterName(requesterName);
+        }
+
+        if (orderDto.getBranch() == null) {
+            orderDto.setBranch(branch);
+        }
+
+        purchaseOrderService.addPurchaseOrder(orderDto);
+
+        //  JSON 형식의 응답 반환
+        return ResponseEntity.ok(Map.of("message", "발주가 성공적으로 등록되었습니다."));
     }
+
+
 
 
     @PostMapping("/create")
@@ -99,13 +118,6 @@ public class PuchaseOrderController {
         return ResponseEntity.ok(response);
     }
 
-    @GetMapping("/generateOrderId")
-    public ResponseEntity<Map<String, String>> generateOrderId() {
-        String orderId = purchaseOrderService.generateOrderId();
-        Map<String, String> response = new HashMap<>();
-        response.put("orderId", orderId);
-        return ResponseEntity.ok(response);
-    }
 
 
 }

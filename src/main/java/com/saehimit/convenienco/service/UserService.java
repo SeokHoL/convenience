@@ -102,6 +102,13 @@ public class UserService {
         return userMapper.findByLoginId(loginId);
     }
 
+    public String getUserNameById(String userId) {
+        return userMapper.findUserNameById(userId);
+    }
+
+    public String getBranchByUserId(String userId) {
+        return userMapper.findBranchByUserId(userId); // DB에서 branch 조회
+    }
 
 //    public void handleLoginFailure(String loginId) {
 //        UsersDto user = userMapper.findUserByLoginId(loginId);

@@ -104,5 +104,14 @@
         WHERE login_id = #{loginId}
     </update>
 
+    <select id="findUserNameById" resultType="String">
+        SELECT username FROM users WHERE login_id = #{userId}
+    </select>
+
+    <select id="findBranchByUserId" resultType="String">
+        SELECT branch  FROM users WHERE login_id = #{userId}
+    </select>
+
+
 
 </mapper>

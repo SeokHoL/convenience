@@ -22,6 +22,7 @@ public class PurchaseOrderService {
 
     private final PurchaseOrderMapper purchaseOrderMapper;
     private final PurchaseOrderItemMapper purchaseOrderItemMapper;
+    private final UserService userService;
 
     public List<PurchaseOrderDto> searchPurchaseOrders(String branch, String orderId, String requesterName) {
         System.out.println("🔍 검색 실행 - branch: " + branch + ", orderId: " + orderId + ", requesterName: " + requesterName);
@@ -31,8 +32,6 @@ public class PurchaseOrderService {
 
         return results;
     }
-
-
 
 
     public List<PurchaseOrderDto> getAllPurchaseOrders() {
@@ -63,35 +62,46 @@ public class PurchaseOrderService {
         newOrder.setStatus("미승인");
 
         purchaseOrderMapper.insertPurchaseOrder(newOrder);
-        System.out.println("📌 생성된 발주번호: " + newOrder.getOrderId());
+        System.out.println(" 생성된 발주번호: " + newOrder.getOrderId());
 
         return newOrder.getOrderId();
     }
 
     @Transactional
     public void addPurchaseOrder(PurchaseOrderDto orderDto) {
-        // 1️⃣ 발주번호가 없으면 생성
+        // 발주번호가 없으면 생성
         if (orderDto.getOrderId() == null || orderDto.getOrderId().isEmpty()) {
             orderDto.setOrderId(generateOrderId());
         }
 
-        // 2️⃣ 기본값 설정
+        // 기본값 설정
         if (orderDto.getStatus() == null || orderDto.getStatus().isEmpty()) {
             orderDto.setStatus("미승인");
         }
 
-        // 3️⃣ 구매 발주 (헤더) 저장 (중복 방지)
+        // branch 정보 설정 (로그인한 사용자 정보에서 가져옴)
+        if (orderDto.getBranch() == null || orderDto.getBranch().isEmpty()) {
+            String branch = userService.getBranchByUserId(orderDto.getRequesterId()); // 유저 ID로 지점 조회
+            orderDto.setBranch(branch);
+        }
+
+        // 구매 발주 (헤더) 저장 (중복 방지)
         if (purchaseOrderMapper.findByOrderId(orderDto.getOrderId()) == null) {
             purchaseOrderMapper.insertPurchaseOrder(orderDto);
         }
 
-        // 4️⃣ 구매 발주 상세 (아이템) 저장
+        // 구매 발주 상세 (아이템) 저장
         if (orderDto.getItems() != null) {
             for (PurchaseOrderItemDto item : orderDto.getItems()) {
                 item.setOrderId(orderDto.getOrderId());
+
+                // 아이템에도 branch 설정
+                if (item.getBranch() == null || item.getBranch().isEmpty()) {
+                    item.setBranch(orderDto.getBranch());
+                }
+
                 purchaseOrderItemMapper.insertPurchaseOrderItem(item);
             }
         }
     }
-
 }

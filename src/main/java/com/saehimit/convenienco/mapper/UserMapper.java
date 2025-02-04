@@ -41,4 +41,7 @@ public interface UserMapper {
     void resetLoginFailCount(String loginId); // 로그인 실패 횟수 초기화
 
 
+    String findUserNameById(String userId);
+
+    String findBranchByUserId(String userId);
 }
