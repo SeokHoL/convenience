@@ -22,7 +22,7 @@ public class PurchaseOrderDto {
 
     private List<PurchaseOrderItemDto> items;
 
-    // ✅ orderId 자동 생성 메서드 추가
+    // orderId 자동 생성 메서드 추가
     public void generateOrderId(String generatedOrderId) {
         this.orderId = generatedOrderId;
     }

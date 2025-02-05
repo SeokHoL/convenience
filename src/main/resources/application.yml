@@ -18,6 +18,21 @@ spring:
   main:
     allow-circular-references: true
 
+#  mvc:
+#    view:
+#      prefix: classpath:/templates/   # templates 폴더를 찾을 수 있도록 설정
+#      suffix: .html                    # HTML 파일 확장자 지정
+#
+#  web:
+#      esources:
+#      static-locations: classpath:/static/  # 정적 리소스 (CSS, JS, 이미지) 로드
+#
+#  thymeleaf:
+#     prefix: classpath:/templates/       # Thymeleaf 템플릿 폴더 설정
+#     suffix: .html                        # Thymeleaf가 HTML 파일을 인식하도록 설정
+#     check-template-location: true        # 올바른 경로인지 확인
+#     cache: false                         # 개발 중 캐싱 비활성화 (변경 사항 즉시 반영)
+
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: jdbc:mysql://localhost:3306/convenience?serverTimezone=Asia/Seoul&characterEncoding=UTF-8
@@ -29,6 +44,8 @@ mybatis:
   mapper-locations: classpath:mapper/*.xml
   type-aliases-package: com.saehimit.convenienco.dto
   config-location: classpath:mybatis-config.xml
+
+
 
 
 

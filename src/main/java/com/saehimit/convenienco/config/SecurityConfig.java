@@ -35,6 +35,7 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
+//                .cors().and()
                 .csrf().disable()
                 .authorizeHttpRequests((requests) -> requests
                         // 정적 리소스 접근 허용

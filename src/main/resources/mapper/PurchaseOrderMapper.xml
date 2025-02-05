@@ -5,10 +5,16 @@
 
     <!-- 발주 헤더 저장 -->
     <insert id="insertPurchaseOrder" parameterType="com.saehimit.convenienco.dto.PurchaseOrderDto">
-        INSERT INTO purchase_order (order_id, branch, requester_id, requester_name, status, registered_date, modified_by)
-        VALUES (#{orderId}, #{branch}, #{requesterId}, #{requesterName},
-                IFNULL(#{status}, '미승인'), NOW(), #{modifiedBy})
+        INSERT INTO purchase_order (
+            order_id, branch, requester_id, requester_name, status, registered_date, last_modified, modified_by
+        )
+        VALUES (
+                   #{orderId}, #{branch}, #{requesterId}, #{requesterName},
+                   IFNULL(#{status}, '미승인'), NOW(), NULL, NULL  -- last_modified를 NULL로 설정
+               )
     </insert>
+
+
 
     <!-- 발주 정보 조회 -->
     <select id="findPurchaseOrderById" resultType="com.saehimit.convenienco.dto.PurchaseOrderDto">
@@ -43,6 +49,18 @@
         SELECT COALESCE(MAX(CAST(SUBSTRING_INDEX(order_id, '-', -1) AS UNSIGNED)), 10000) FROM purchase_order
     </select>
 
+
+    <update id="updatePurchaseOrder">
+        UPDATE purchase_order
+        SET
+            branch = #{branch},
+            requester_id = #{requesterId},
+            requester_name = #{requesterName},
+            status = #{status},
+            modified_by = #{modifiedBy},
+            modified_date = NOW()
+        WHERE order_id = #{orderId}
+    </update>
 
 
 

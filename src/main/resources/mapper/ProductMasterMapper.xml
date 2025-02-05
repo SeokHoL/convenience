@@ -22,7 +22,10 @@
                 AND product_name LIKE CONCAT('%', #{productName}, '%')
             </if>
         </where>
+        ORDER BY product_type ASC, product_code ASC
     </select>
+
+
 
     <insert id="addProduct" parameterType="ProductMasterDto">
         INSERT INTO ProductMaster (product_type, product_code, product_name, unit, price, active, registered_by, registered_date)
