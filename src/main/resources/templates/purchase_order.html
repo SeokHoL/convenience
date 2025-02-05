@@ -331,6 +331,30 @@
 
         loadProductData(); // 상품 데이터 로드
 
+        // 수량 입력 시 총 가격 및 총 수량 업데이트
+        document.getElementById("productTableBody").addEventListener("input", function (event) {
+            if (event.target.classList.contains("order-quantity")) {
+                updateTotalValues();
+            }
+        });
+
+        // 체크박스 클릭 시 수량 입력 활성화/비활성화 + 가격 업데이트
+        document.getElementById("productTableBody").addEventListener("change", function (event) {
+            if (event.target.classList.contains("order-checkbox")) {
+                let productCode = event.target.dataset.productCode;
+                let quantityInput = document.querySelector(`.order-quantity[data-product-code='${productCode}']`);
+
+                if (event.target.checked) {
+                    quantityInput.disabled = false; // 체크되었을 때 활성화
+                } else {
+                    quantityInput.disabled = true; // 체크 해제 시 비활성화 및 값 초기화
+                    quantityInput.value = "0";
+                }
+
+                updateTotalValues(); // 체크박스 변경 시 총 가격 업데이트
+            }
+        });
+
         // 모달이 열릴 때 발주번호 자동 생성
         document.getElementById("addPurchaseOrderModal").addEventListener("show.bs.modal", function () {
             loadUserInfo(); // 로그인 정보 가져오기
@@ -406,8 +430,6 @@
         fetch('/product_master/getAll')
             .then(response => response.json())
             .then(data => {
-                // console.log("상품 데이터 응답:", data);
-
                 let tableBody = document.getElementById("productTableBody");
                 tableBody.innerHTML = "";
 
@@ -431,10 +453,12 @@
                     <td>${product.unit}</td>
                     <td>0</td>
                     <td>20</td>
-                    <td><input type="checkbox" class="order-checkbox" data-product-code="${product.productCode}"></td>
+                    <td>
+                        <input type="checkbox" class="order-checkbox" data-product-code="${product.productCode}">
+                    </td>
                     <td>
                         <input type="number" class="form-control order-quantity" min="0" max="20" value="0"
-                               data-product-code="${product.productCode}" />
+                               data-product-code="${product.productCode}" disabled>
                     </td>
                     <td>${expectedDate}</td>
                 `;
@@ -442,21 +466,25 @@
                     tableBody.appendChild(row);
                 });
 
-                // 체크박스 클릭 시 updateTotalValues() 실행하도록 이벤트 추가
+                // 체크박스 클릭 시 수량 입력 활성화/비활성화
                 document.querySelectorAll(".order-checkbox").forEach(checkbox => {
-                    checkbox.addEventListener("change", updateTotalValues);
-                });
+                    checkbox.addEventListener("change", function () {
+                        let productCode = this.dataset.productCode;
+                        let quantityInput = document.querySelector(`.order-quantity[data-product-code='${productCode}']`);
 
-                // 수량 입력 시 updateTotalValues() 실행하도록 이벤트 추가
-                document.querySelectorAll(".order-quantity").forEach(input => {
-                    input.addEventListener("input", updateTotalValues);
+                        if (this.checked) {
+                            quantityInput.disabled = false; // 체크되었을 때 활성화
+                        } else {
+                            quantityInput.disabled = true; // 체크 해제 시 비활성화 및 값 초기화
+                            quantityInput.value = "0";
+                        }
+                    });
                 });
 
                 console.log("상품 목록이 테이블에 추가되었습니다.");
             })
             .catch(error => console.error("상품 데이터를 불러오는 중 오류 발생:", error));
     }
-
 
     // 총수량 및 총가격 자동 계산
     function updateTotalValues() {
