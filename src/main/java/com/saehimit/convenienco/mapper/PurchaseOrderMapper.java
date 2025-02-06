@@ -22,4 +22,9 @@ public interface PurchaseOrderMapper {
     PurchaseOrderDto findByOrderId(String orderId);
 
     Integer getLastOrderNumber();  // 가장 마지막 발주번호 숫자 조회 추가
+
+    void updatePurchaseOrderHeader(String orderId, String modifiedBy);
+
+    void deletePurchaseOrder(@Param("orderIds") List<String> orderIds);
+
 }

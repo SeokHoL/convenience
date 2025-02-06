@@ -169,7 +169,11 @@
             <button class="btn btn-link">기타입고</button>
         </div>
         <button class="btn btn-primary">출고관리</button>
-        <button class="btn btn-primary">물류현황관리</button>
+        <button class="btn btn-primary" onclick="toggleSubmenu('logisticsManagementMenu')">물류현황관리</button>
+        <div id="logisticsManagementMenu" class="submenu">
+            <button class="btn btn-link" onclick="checkAccessAndRedirect('/inventory')">재고관리</button>
+            <button class="btn btn-link" onclick="checkAccessAndRedirect('/inventory/stock-movement')">품목수불현황</button>
+        </div>
         <button class="btn btn-primary" onclick="toggleSubmenu('referenceManagementMenu')">기준정보관리</button>
         <div id="referenceManagementMenu" class="submenu">
             <!-- 품목 마스터 관리 추가 -->

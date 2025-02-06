@@ -5,11 +5,10 @@
 
     <!-- 발주 상세 저장 -->
     <insert id="insertPurchaseOrderItem">
-        INSERT INTO purchase_order_item
-        (order_id, branch, product_code, product_name, price, unit, min_order, max_order, order_quantity, expected_date)
-        VALUES
-            (#{orderId}, #{branch}, #{productCode}, #{productName}, #{price}, #{unit}, #{minOrder}, #{maxOrder}, #{orderQuantity}, #{expectedDate})
+        INSERT INTO purchase_order_item (order_id, branch, product_code, product_name, price, unit, min_order, max_order, order_quantity, expected_date, inventory_id)
+        VALUES (#{orderId}, #{branch}, #{productCode}, #{productName}, #{price}, #{unit}, #{minOrder}, #{maxOrder}, #{orderQuantity}, #{expectedDate}, #{inventoryId})
     </insert>
+
 
     <!-- 특정 발주의 상세 목록 조회 -->
     <select id="findPurchaseOrderItemsByOrderId" resultType="com.saehimit.convenienco.dto.PurchaseOrderItemDto">
@@ -23,9 +22,60 @@
         WHERE item_id = #{itemId}
     </update>
 
+
+    <!-- 구매발주 헤더(purchase_order) 테이블의 수정일자 및 수정자 업데이트 -->
+    <update id="updatePurchaseOrderHeader">
+        UPDATE purchase_order
+        SET last_modified = NOW(),
+            modified_by = #{modifiedBy}
+        WHERE order_id = #{orderId}
+    </update>
+
+
     <!-- 특정 발주의 상세 삭제 -->
+<!--    <delete id="deletePurchaseOrderItems">-->
+<!--        DELETE FROM purchase_order_item WHERE order_id = #{orderId}-->
+<!--    </delete>-->
+
+    <!-- 기존 품목의 재고번호 조회 -->
+    <select id="findInventoryIdByProductCode" resultType="String">
+        SELECT inventory_id
+        FROM purchase_order_item
+        WHERE product_code = #{productCode}
+            LIMIT 1
+    </select>
+
+    <!-- 가장 최근의 재고번호 조회 -->
+    <select id="findLastInventoryId" resultType="String">
+        SELECT inventory_id FROM purchase_order_item ORDER BY inventory_id DESC LIMIT 1
+    </select>
+
+
+    <select id="findLastInventoryIdByOrderId" resultType="String">
+        SELECT inventory_id FROM purchase_order_item
+        WHERE order_id = #{orderId}
+        ORDER BY inventory_id DESC
+            LIMIT 1
+    </select>
+
+
+    <select id="findOrderIdByItemId" parameterType="int" resultType="String">
+        SELECT order_id FROM purchase_order_item WHERE item_id = #{itemId}
+    </select>
+
+
+    <!-- 여러 개의 발주 품목 삭제 -->
     <delete id="deletePurchaseOrderItems">
-        DELETE FROM purchase_order_item WHERE order_id = #{orderId}
+        DELETE FROM purchase_order_item WHERE order_id IN
+        <foreach collection="orderIds" item="orderId" open="(" separator="," close=")">
+            #{orderId}
+        </foreach>
     </delete>
+
+
+
+
+
+
 
 </mapper>

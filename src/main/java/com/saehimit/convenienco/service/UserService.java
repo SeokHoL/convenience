@@ -115,6 +115,14 @@ public class UserService {
         return userMapper.findBranchByUserId(userId); // DB에서 branch 조회
     }
 
+    public String getLoggedInUser() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()) {
+            throw new RuntimeException("로그인된 사용자가 없습니다.");
+        }
+        return authentication.getName(); // 현재 로그인한 사용자의 ID 반환
+    }
+
 //    public void handleLoginFailure(String loginId) {
 //        UsersDto user = userMapper.findUserByLoginId(loginId);
 //        if (user == null) {

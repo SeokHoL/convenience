@@ -10,11 +10,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Random;
-import java.util.Set;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -23,6 +21,7 @@ public class PurchaseOrderService {
     private final PurchaseOrderMapper purchaseOrderMapper;
     private final PurchaseOrderItemMapper purchaseOrderItemMapper;
     private final UserService userService;
+    private final InventoryService inventoryService;
 
     public List<PurchaseOrderDto> searchPurchaseOrders(String branch, String orderId, String requesterName) {
         System.out.println("🔍 검색 실행 - branch: " + branch + ", orderId: " + orderId + ", requesterName: " + requesterName);
@@ -69,33 +68,31 @@ public class PurchaseOrderService {
 
     @Transactional
     public void addPurchaseOrder(PurchaseOrderDto orderDto) {
-        // 발주번호가 없으면 생성
         if (orderDto.getOrderId() == null || orderDto.getOrderId().isEmpty()) {
             orderDto.setOrderId(generateOrderId());
         }
 
-        // 기본값 설정
         if (orderDto.getStatus() == null || orderDto.getStatus().isEmpty()) {
             orderDto.setStatus("미승인");
         }
 
-        // branch 정보 설정 (로그인한 사용자 정보에서 가져옴)
         if (orderDto.getBranch() == null || orderDto.getBranch().isEmpty()) {
-            String branch = userService.getBranchByUserId(orderDto.getRequesterId()); // 유저 ID로 지점 조회
+            String branch = userService.getBranchByUserId(orderDto.getRequesterId());
             orderDto.setBranch(branch);
         }
 
-        // 구매 발주 (헤더) 저장 (중복 방지)
         if (purchaseOrderMapper.findByOrderId(orderDto.getOrderId()) == null) {
             purchaseOrderMapper.insertPurchaseOrder(orderDto);
         }
 
-        // 구매 발주 상세 (아이템) 저장
         if (orderDto.getItems() != null) {
             for (PurchaseOrderItemDto item : orderDto.getItems()) {
                 item.setOrderId(orderDto.getOrderId());
 
-                // 아이템에도 branch 설정
+                //  품목별 재고번호 자동 생성 (orderId를 전달하도록 수정)
+                String inventoryId = inventoryService.generateInventoryId(orderDto.getOrderId());
+                item.setInventoryId(inventoryId);
+
                 if (item.getBranch() == null || item.getBranch().isEmpty()) {
                     item.setBranch(orderDto.getBranch());
                 }
@@ -104,4 +101,43 @@ public class PurchaseOrderService {
             }
         }
     }
+
+
+    // 특정 발주의 품목 조회
+    public List<PurchaseOrderItemDto> getPurchaseOrderItems(String orderId) {
+        return purchaseOrderItemMapper.findPurchaseOrderItemsByOrderId(orderId);
+    }
+
+    // 발주 품목 수량 수정 (발주수량만 변경 가능)
+    @Transactional
+    public void updatePurchaseOrderItems(List<PurchaseOrderItemDto> items) {
+        if (items.isEmpty()) return;
+
+        String modifiedBy = userService.getLoggedInUser(); // 로그인된 사용자 가져오기
+        String orderId = purchaseOrderItemMapper.findOrderIdByItemId(items.get(0).getItemId());
+        LocalDateTime now = LocalDateTime.now();
+
+        for (PurchaseOrderItemDto item : items) {
+            purchaseOrderItemMapper.updatePurchaseOrderItem(item);
+        }
+
+        purchaseOrderMapper.updatePurchaseOrderHeader(orderId, modifiedBy);
+    }
+
+
+    @Transactional
+    public void deletePurchaseOrders(List<String> orderIds) {
+        if (orderIds == null || orderIds.isEmpty()) {
+            throw new IllegalArgumentException("삭제할 발주를 선택해주세요.");
+        }
+
+        // 1. 발주의 모든 품목 삭제
+        purchaseOrderItemMapper.deletePurchaseOrderItems(orderIds);
+
+        // 2. 발주 헤더 삭제
+        purchaseOrderMapper.deletePurchaseOrder(orderIds);
+    }
+
+
+
 }

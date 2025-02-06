@@ -122,6 +122,8 @@
     </div>
 </div>
 
+<!--기본 리스트는 Thymeleaf로 렌더링하고, 추가적인 데이터 업데이트는 JavaScript(AJAX)로 처리하는 방식이 효율적 -->
+
 <div class="container mt-4">
     <div class="form-container">
         <h3 class="mb-4">구매 발주 검색</h3>
@@ -134,7 +136,7 @@
                 <div class="col-md-3">
                     <label for="branch" class="form-label">지점</label>
                     <select class="form-select" id="branch" name="branch">
-                        <option value="">선택하세요</option>
+                        <option value="">전체</option>
                         <option value="본사">본사</option>
                         <option value="안양">안양</option>
                         <option value="청주">청주</option>
@@ -158,7 +160,7 @@
     </div>
 
     <div class="text-end mb-3">
-        <button class="btn btn-success-custom" data-bs-toggle="modal" data-bs-target="#addPurchaseOrderModal">추가</button>
+        <button class="btn btn-success-custom" data-bs-toggle="modal" data-bs-target="#addPurchaseOrderModal">발주 하기</button>
         <button class="btn btn-warning-custom" onclick="editSelected()">수정</button>
         <button class="btn btn-danger" onclick="deleteSelected()">삭제</button>
     </div>
@@ -220,6 +222,7 @@
                             <tr>
                                 <th>No</th>
                                 <th>품목번호</th>
+<!--                                <th>재고번호</th>-->
                                 <th>상품명</th>
                                 <th>가격</th>
                                 <th>단위</th>
@@ -272,57 +275,42 @@
 </div>
 
 
-
-
 <!-- 수정 모달 -->
-<div class="modal fade" id="editProductModal" tabindex="-1" aria-labelledby="editProductModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
+<div class="modal fade" id="editPurchaseOrderModal" tabindex="-1" aria-labelledby="editPurchaseOrderModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="editProductModalLabel">품목 수정</h5>
+                <h5 class="modal-title">발주 수정</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form id="editProductForm" th:action="@{/product_master/update}" method="post">
-                <div class="modal-body">
-                    <input type="hidden" id="editMasterId" name="masterId">
-
-                    <div class="mb-3">
-                        <label for="editProductType" class="form-label">품목유형</label>
-                        <select class="form-select" id="editProductType" name="productType">
-                            <option value="BE">BE</option>
-                            <option value="SN">SN</option>
-                            <option value="TO">TO</option>
-                            <option value="AL">AL</option>
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label for="editProductCode" class="form-label">품목코드</label>
-                        <input type="text" id="editProductCode" name="productCode" class="form-control" required oninput="checkEditProductCode()">
-                        <div id="editProductCodeMessage" class="text-danger" style="display: none;">이미 사용 중인 품목코드입니다.</div>
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="editProductName" class="form-label">품목명</label>
-                        <input type="text" id="editProductName" name="productName" class="form-control" required oninput="checkEditProductName()">
-                        <div id="editProductNameMessage" class="text-danger" style="display: none;">이미 사용 중인 품목명입니다.</div>
-                    </div>
-                    <div class="mb-3">
-                        <label for="editPrice" class="form-label">가격</label>
-                        <input type="number" id="editPrice" name="price" class="form-control" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="editUnit" class="form-label">단위</label>
-                        <input type="text" id="editUnit" name="unit" class="form-control" required>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="submit" class="btn btn-primary">저장</button>
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">닫기</button>
-                </div>
-            </form>
+            <div class="modal-body">
+                <table class="table table-bordered">
+                    <thead>
+                    <tr>
+                        <th>선택</th>
+                        <th>품목번호</th>
+                        <th>상품명</th>
+                        <th>가격</th>
+                        <th>단위</th>
+                        <th>최소발주량</th>
+                        <th>최대발주량</th>
+                        <th>발주수량</th>
+                        <th>입고예정일</th>
+                    </tr>
+                    </thead>
+                    <tbody id="editOrderItemsTable">
+                    <!-- JavaScript로 동적으로 삽입 -->
+                    </tbody>
+                </table>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" onclick="updatePurchaseOrder()">저장</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">닫기</button>
+            </div>
         </div>
     </div>
 </div>
+
 
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
@@ -400,9 +388,6 @@
 
 
 
-
-
-
     // 발주번호 생성
     function generateOrderIdForModal() {
         fetch('/purchase_order/generateOrderId')
@@ -420,11 +405,6 @@
             .catch(error => console.error("모달 발주번호 생성 오류:", error));
     }
 
-
-
-
-
-
     // 상품 데이터 로드 및 UI에 표시
     function loadProductData() {
         fetch('/product_master/getAll')
@@ -433,20 +413,12 @@
                 let tableBody = document.getElementById("productTableBody");
                 tableBody.innerHTML = "";
 
-                if (!data || data.length === 0) {
-                    console.warn("상품 데이터가 비어 있습니다.");
-                    tableBody.innerHTML = "<tr><td colspan='10'>상품 데이터가 없습니다.</td></tr>";
-                    return;
-                }
+                let itemIndex = 1;
 
-                data.forEach((product, index) => {
-                    let today = new Date();
-                    today.setDate(today.getDate() + 2);
-                    let expectedDate = today.toISOString().split("T")[0];
-
+                data.forEach((product) => {
                     let row = document.createElement("tr");
                     row.innerHTML = `
-                    <td>${index + 1}</td>
+                    <td>${itemIndex}</td>
                     <td>${product.productCode}</td>
                     <td>${product.productName}</td>
                     <td>${product.price.toLocaleString()}원</td>
@@ -460,47 +432,49 @@
                         <input type="number" class="form-control order-quantity" min="0" max="20" value="0"
                                data-product-code="${product.productCode}" disabled>
                     </td>
-                    <td>${expectedDate}</td>
+                    <td>${new Date().toISOString().split("T")[0]}</td>
                 `;
 
                     tableBody.appendChild(row);
+                    itemIndex++;
                 });
 
-                // 체크박스 클릭 시 수량 입력 활성화/비활성화
-                document.querySelectorAll(".order-checkbox").forEach(checkbox => {
-                    checkbox.addEventListener("change", function () {
-                        let productCode = this.dataset.productCode;
-                        let quantityInput = document.querySelector(`.order-quantity[data-product-code='${productCode}']`);
-
-                        if (this.checked) {
-                            quantityInput.disabled = false; // 체크되었을 때 활성화
-                        } else {
-                            quantityInput.disabled = true; // 체크 해제 시 비활성화 및 값 초기화
-                            quantityInput.value = "0";
-                        }
-                    });
-                });
-
-                console.log("상품 목록이 테이블에 추가되었습니다.");
+                setTimeout(updateTotalValues, 500);
             })
             .catch(error => console.error("상품 데이터를 불러오는 중 오류 발생:", error));
     }
 
+    //  재고번호 생성 함수
+        function generateInventoryId(index) {
+            return "ST" + (1000 + index); // ST1001, ST1002, ST1003...
+        }
+
+
     // 총수량 및 총가격 자동 계산
     function updateTotalValues() {
+        let checkboxes = document.querySelectorAll(".order-checkbox");
+
+        if (!checkboxes || checkboxes.length === 0) {
+            console.warn("체크박스가 없음: updateTotalValues 실행 중단");
+            return;
+        }
+
         let totalQuantity = 0;
         let totalPrice = 0;
 
-        document.querySelectorAll("#productTableBody tr").forEach(row => {
-            let checkbox = row.cells[7].querySelector(".order-checkbox"); // ✅ 변경된 인덱스 유지
-            let quantityInput = row.cells[8].querySelector("input"); // ✅ 변경된 인덱스 유지
+        checkboxes.forEach((checkbox) => {
+            if (checkbox.checked) {
+                let row = checkbox.closest("tr");
+                let quantityInput = row.querySelector(".order-quantity");
+                let priceCell = row.querySelector("td:nth-child(4)"); // 가격 셀 인덱스를 5에서 4로 수정
 
-            let quantity = parseInt(quantityInput.value) || 0;
-            let price = parseInt(row.cells[3].textContent.replace(/,/g, "").replace("원", "")) || 0;
+                if (quantityInput && priceCell) {
+                    let quantity = parseInt(quantityInput.value, 10) || 0;
+                    let price = parseInt(priceCell.textContent.replace(",", "").replace("원", ""), 10) || 0;
 
-            if (checkbox.checked) {  // ✅ 체크된 항목만 계산
-                totalQuantity += quantity;
-                totalPrice += quantity * price;
+                    totalQuantity += quantity;
+                    totalPrice += quantity * price;
+                }
             }
         });
 
@@ -534,75 +508,264 @@
         return 'PO' + new Date().toISOString().slice(0, 10).replace(/-/g, '') + '-' + Math.floor(Math.random() * 100000);
     }
 
+    // function updateInventoryIdUI(productCode, inventoryId) {
+    //     document.querySelectorAll(`#productTableBody tr`).forEach(row => {
+    //         let productCodeCell = row.cells[1].textContent.trim();
+    //         if (productCodeCell === productCode) {
+    //             row.cells[2].textContent = inventoryId; // 재고번호 업데이트
+    //         }
+    //     });
+    // }
+
+
 
     // 발주 요청 전송
     function submitOrder() {
-        let branchField = document.getElementById("branchInfo");
-        let branchValue = branchField ? branchField.value.trim() : "";
-        let orderIdField = document.querySelector("#addPurchaseOrderModal #orderId");
-        let orderIdValue = orderIdField ? orderIdField.value.trim() : "";
+        let checkboxes = document.querySelectorAll(".order-checkbox");
 
-        console.log("UI에서 가져온 지점명:", branchValue);
-        console.log("현재 발주번호:", orderIdValue);
-
-        if (!branchValue || branchValue === "") {
-            alert("지점 정보가 없습니다. 다시 로그인해 주세요.");
-            console.error("오류: branch 값이 존재하지 않음.");
+        if (!checkboxes || checkboxes.length === 0) {
+            console.error("오류: 체크박스를 찾을 수 없음");
             return;
         }
 
-        if (!orderIdValue || orderIdValue.trim() === "") {
-            alert("발주번호가 없습니다. 다시 시도해주세요.");
-            console.error("오류: orderId가 존재하지 않음.");
+        let selectedItems = Array.from(checkboxes)
+            .filter(checkbox => checkbox.checked)
+            .map(checkbox => {
+                let row = checkbox.closest("tr");
+                if (!row) {
+                    console.error("오류: 체크된 품목의 행을 찾을 수 없음");
+                    return null;
+                }
+
+                let productCode = row.children[1].textContent.trim(); // 품목번호
+                let productName = row.children[2].textContent.trim(); // 상품명
+                let price = parseInt(row.children[3].textContent.replace(",", "").replace("원", ""), 10) || 0;
+                let unit = row.children[4].textContent.trim();
+                let minOrder = parseInt(row.children[5].textContent, 10) || 0;
+                let maxOrder = parseInt(row.children[6].textContent, 10) || 0;
+                let quantityInput = row.querySelector(".order-quantity");
+                let expectedDateIndex = 9; // 입고예정일 컬럼 인덱스
+
+                let expectedDate = row.children[expectedDateIndex].textContent.trim();
+
+                if (!quantityInput) {
+                    console.error(`오류: ${productCode}의 발주 수량 입력란을 찾을 수 없음`);
+                    return null;
+                }
+
+                let quantity = parseInt(quantityInput.value, 10) || 0;
+                if (quantity === 0) {
+                    console.warn(`경고: ${productCode}의 발주 수량이 0입니다.`);
+                    return null;
+                }
+
+                return {
+                    productCode: productCode,
+                    productName: productName,
+                    price: price,
+                    unit: unit,
+                    minOrder: minOrder,
+                    maxOrder: maxOrder,
+                    orderQuantity: quantity,
+                    expectedDate: expectedDate
+                };
+            })
+            .filter(item => item !== null);
+
+        if (selectedItems.length === 0) {
+            alert("선택된 품목이 없습니다.");
             return;
         }
 
         let orderData = {
-            orderId: orderIdValue,
-            branch: branchValue,
-            items: [...document.querySelectorAll("#productTableBody tr")].map(row => {
-                let checkbox = row.cells[7].querySelector(".order-checkbox");
-                if (checkbox.checked) {
-                    let orderQuantity = parseInt(row.cells[8].querySelector("input").value) || 0;
-                    let maxOrder = parseInt(row.cells[6].textContent) || 0;  //  maxOrder 값을 가져오도록 수정
-
-                    return {
-                        productCode: row.cells[1].textContent.trim(),
-                        productName: row.cells[2].textContent.trim(),
-                        price: parseInt(row.cells[3].textContent.replace(/,/g, "").replace("원", "")),
-                        unit: row.cells[4].textContent.trim(),
-                        orderQuantity: orderQuantity,
-                        maxOrder: maxOrder,  // maxOrder 값을 포함하도록 수정
-                        expectedDate: row.cells[9].textContent.trim()
-                    };
-                }
-            }).filter(item => item !== undefined)
+            orderId: document.getElementById("orderId").value.trim(),
+            branch: document.getElementById("branchInfo").value.trim(),
+            items: selectedItems
         };
 
-        console.log("서버로 전송할 발주 데이터:", JSON.stringify(orderData, null, 2));
-
-        fetch('/purchase_order/add', {
+        console.log("발주 데이터:", orderData);
+        fetch("/purchase_order/add", {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(orderData)
+            body: JSON.stringify(orderData),
+            headers: { "Content-Type": "application/json" }
         })
             .then(response => response.json())
-            .then(result => {
-                console.log("서버 응답:", result);
-                alert(result.message);
-                let modal = bootstrap.Modal.getInstance(document.getElementById("addPurchaseOrderModal"));
-                modal.hide();
+            .then(data => {
+                if (data.message === "발주가 성공적으로 등록되었습니다.") {
+                    alert("발주가 성공적으로 등록되었습니다.");
+
+                    // 모달 자동 닫기
+                    let modal = bootstrap.Modal.getInstance(document.getElementById('addPurchaseOrderModal'));
+                    if (modal) {
+                        modal.hide();
+                    }
+
+                    // 발주 완료 후 새로고침하여 리스트 갱신
+                    location.reload();
+                }
             })
-            .catch(error => {
-                console.error("오류 발생:", error);
-                alert("오류 발생: " + error.message);
-            });
+            .catch(error => console.error("발주 처리 중 오류 발생:", error));
     }
 
 
 
+    // 선택한 발주 조회 및 수정 모달 표시
+    function editSelected() {
+        let selectedOrderId = getSelectedOrderId(); // 선택된 발주번호 가져오기
+        if (!selectedOrderId) {
+            alert("수정할 발주를 선택해주세요.");
+            return;
+        }
+
+        // 서버에서 해당 발주의 품목 리스트 조회
+        fetch(`/purchase_order/items?orderId=${selectedOrderId}`)
+            .then(response => response.json())
+            .then(items => {
+                let tableBody = document.getElementById("editOrderItemsTable");
+                tableBody.innerHTML = ""; // 기존 데이터 초기화
+
+                items.forEach(item => {
+                    let row = `
+                    <tr>
+                        <td>
+                            <input type="checkbox" class="order-checkbox" data-item-id="${item.itemId}" onchange="toggleQuantityInput(this)">
+                        </td>
+                        <td>${item.productCode}</td>
+                        <td>${item.productName}</td>
+                        <td>${item.price.toLocaleString()}원</td>
+                        <td>${item.unit}</td>
+                        <td>${item.minOrder}</td>
+                        <td>${item.maxOrder}</td>
+                        <td>
+                            <input type="number" class="form-control update-quantity"
+                                   min="${item.minOrder}" max="${item.maxOrder}"
+                                   value="${item.orderQuantity}" data-item-id="${item.itemId}"
+                                   disabled>
+                        </td>
+                        <td>${item.expectedDate}</td>
+                    </tr>
+                `;
+                    tableBody.innerHTML += row;
+                });
+
+                // 모달 열기
+                let modal = new bootstrap.Modal(document.getElementById("editPurchaseOrderModal"));
+                modal.show();
+            })
+            .catch(error => console.error("발주 품목을 불러오는 중 오류 발생:", error));
+    }
+
+    // 체크박스 클릭 시 수량 입력 활성화/비활성화
+    function toggleQuantityInput(checkbox) {
+        let itemId = checkbox.dataset.itemId;
+        let quantityInput = document.querySelector(`.update-quantity[data-item-id='${itemId}']`);
+
+        if (checkbox.checked) {
+            quantityInput.disabled = false; // 선택 시 활성화
+        } else {
+            quantityInput.disabled = true; // 해제 시 비활성화
+            quantityInput.value = 0; // 기본값 0 설정
+        }
+    }
+
+    // 선택된 발주번호 가져오는 함수
+    function getSelectedOrderId() {
+        let checkedBox = document.querySelector(".rowCheckbox:checked");
+        return checkedBox ? checkedBox.value : null;
+    }
+
+    // 수정된 데이터를 서버로 전송
+
+    function updatePurchaseOrder() {
+        let updatedItems = [];
+        let isValid = true; // 유효성 검사 변수
+
+        document.querySelectorAll(".order-checkbox:checked").forEach(checkbox => {
+            let itemId = checkbox.dataset.itemId;
+            let row = checkbox.closest("tr");  // 해당 체크박스가 속한 행 가져오기
+            let quantityInput = row.querySelector(`.update-quantity[data-item-id='${itemId}']`);
+            let expectedDateElement = row.querySelector("td:last-child");  // 마지막 컬럼에서 입고예정일 가져오기
+
+            if (!expectedDateElement) {
+                alert("입고예정일이 없습니다.");
+                isValid = false;
+                return;
+            }
+
+            let expectedDate = expectedDateElement.innerText.trim(); //  입고예정일 가져오기
+            let minOrder = parseInt(quantityInput.min, 10);
+            let maxOrder = parseInt(quantityInput.max, 10);
+            let quantity = parseInt(quantityInput.value, 10);
+
+            if (quantity < minOrder || quantity > maxOrder) {
+                alert(`발주 수량은 ${minOrder} ~ ${maxOrder} 사이여야 합니다.`);
+                isValid = false;
+                return;
+            }
+
+            updatedItems.push({
+                itemId: itemId,
+                orderQuantity: quantity,
+                expectedDate: expectedDate //
+            });
+        });
+
+        if (!isValid || updatedItems.length === 0) {
+            alert("수정할 항목을 선택해주세요.");
+            return;
+        }
+
+        fetch("/purchase_order/update", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(updatedItems)
+        })
+            .then(response => response.json())
+            .then(result => {
+                alert(result.message);
+                location.reload(); // 새로고침하여 변경 내용 반영
+            })
+            .catch(error => console.error("발주 수정 중 오류 발생:", error));
+    }
 
 
+
+    <!-- 삭제  -->
+    function deleteSelected() {
+        let selectedOrders = Array.from(document.querySelectorAll(".rowCheckbox:checked"))
+            .map(checkbox => checkbox.value);
+
+        if (selectedOrders.length === 0) {
+            alert("삭제할 발주를 선택해주세요.");
+            return;
+        }
+
+        if (!confirm("선택한 발주를 삭제하시겠습니까?")) {
+            return;
+        }
+
+        fetch("/purchase_order/delete", {
+            method: "DELETE",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ orderIds: selectedOrders })
+        })
+            .then(response => response.json())
+            .then(data => {
+                alert(data.message);
+                location.reload();
+            })
+            .catch(error => console.error("삭제 중 오류 발생:", error));
+    }
+
+
+    // 선택된 발주번호 목록 가져오기
+    function getSelectedOrderIds() {
+        let selectedOrderIds = [];
+        document.querySelectorAll(".rowCheckbox:checked").forEach(checkbox => {
+            selectedOrderIds.push(checkbox.value);
+        });
+        return selectedOrderIds;
+    }
 
 </script>
 

@@ -63,8 +63,22 @@
     </update>
 
 
+    <!-- 발주 헤더(purchase_order) 수정 (수정일자 & 수정자 업데이트) -->
+    <update id="updatePurchaseOrderHeader">
+        UPDATE purchase_order
+        SET last_modified = NOW(),
+            modified_by = #{modifiedBy}
+        WHERE order_id = #{orderId}
+    </update>
 
 
 
+    <!-- 여러 개의 발주 헤더 삭제 -->
+    <delete id="deletePurchaseOrder">
+        DELETE FROM purchase_order WHERE order_id IN
+        <foreach item="orderId" collection="orderIds" open="(" separator="," close=")">
+            #{orderId}
+        </foreach>
+    </delete>
 
 </mapper>

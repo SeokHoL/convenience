@@ -45,7 +45,7 @@ public class SecurityConfig {
                         // 관리자 전용 페이지
                         .requestMatchers("/register","system_management/**","/search").hasRole("ADMIN")
                         // 인증된 사용자 페이지
-                        .requestMatchers("/main").hasAnyRole("ADMIN", "USER", "MANAGER")
+                        .requestMatchers("/main","purchase_order/**").hasAnyRole("ADMIN", "USER", "MANAGER")
                         // 그 외 모든 요청은 인증 필요
                         .anyRequest().authenticated()
                 )

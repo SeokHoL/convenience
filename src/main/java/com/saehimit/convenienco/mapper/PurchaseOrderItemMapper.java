@@ -11,5 +11,13 @@ public interface PurchaseOrderItemMapper {
     void insertPurchaseOrderItem(PurchaseOrderItemDto purchaseOrderItem);
     List<PurchaseOrderItemDto> findPurchaseOrderItemsByOrderId(@Param("orderId") String orderId);
     void updatePurchaseOrderItem(PurchaseOrderItemDto purchaseOrderItem);
-    void deletePurchaseOrderItems(@Param("orderId") String orderId);
+    void deletePurchaseOrderItems(@Param("orderIds") List<String> orderIds);
+
+    String findInventoryIdByProductCode(String productCode);
+
+    String findLastInventoryId();
+
+    String findLastInventoryIdByOrderId(String orderId);
+
+    String findOrderIdByItemId(int itemId);
 }

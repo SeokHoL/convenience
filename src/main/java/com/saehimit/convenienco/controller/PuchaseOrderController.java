@@ -102,8 +102,6 @@ public class PuchaseOrderController {
 
 
 
-
-
     @PostMapping("/create")
     public ResponseEntity<Map<String, String>> createNewOrder(@RequestBody Map<String, String> request) {
         String branch = request.get("branch");
@@ -115,6 +113,36 @@ public class PuchaseOrderController {
         response.put("orderId", orderId);
         return ResponseEntity.ok(response);
     }
+
+
+
+    // 특정 발주의 품목 목록 조회 API
+    @GetMapping("/items")
+    public ResponseEntity<List<PurchaseOrderItemDto>> getPurchaseOrderItems(@RequestParam String orderId) {
+        List<PurchaseOrderItemDto> items = purchaseOrderService.getPurchaseOrderItems(orderId);
+        return ResponseEntity.ok(items);
+    }
+
+    // 발주 품목 수정 API (발주수량만 변경 가능)
+    @PostMapping("/update")
+    public ResponseEntity<Map<String, String>> updatePurchaseOrderItems(@RequestBody List<PurchaseOrderItemDto> items) {
+        purchaseOrderService.updatePurchaseOrderItems(items);
+        return ResponseEntity.ok(Map.of("message", "발주가 성공적으로 수정되었습니다."));
+    }
+
+    @DeleteMapping("/delete")
+    public ResponseEntity<Map<String, String>> deletePurchaseOrders(@RequestBody Map<String, List<String>> request) {
+        List<String> orderIds = request.get("orderIds");
+
+        if (orderIds == null || orderIds.isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("message", "삭제할 발주를 선택해주세요."));
+        }
+
+        purchaseOrderService.deletePurchaseOrders(orderIds);
+        return ResponseEntity.ok(Map.of("message", "선택한 발주가 성공적으로 삭제되었습니다."));
+    }
+
+
 
 
 
