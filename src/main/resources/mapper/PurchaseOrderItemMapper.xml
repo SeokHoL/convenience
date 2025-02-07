@@ -18,9 +18,12 @@
     <!-- 특정 품목 업데이트 -->
     <update id="updatePurchaseOrderItem">
         UPDATE purchase_order_item
-        SET order_quantity = #{orderQuantity}, expected_date = #{expectedDate}
+        SET order_quantity = #{orderQuantity},
+            expected_date = #{expectedDate},
+            max_order = CASE WHEN max_order = 0 THEN 20 ELSE max_order END
         WHERE item_id = #{itemId}
     </update>
+
 
 
     <!-- 구매발주 헤더(purchase_order) 테이블의 수정일자 및 수정자 업데이트 -->
@@ -39,11 +42,12 @@
 
     <!-- 기존 품목의 재고번호 조회 -->
     <select id="findInventoryIdByProductCode" resultType="String">
-        SELECT inventory_id
+        SELECT COALESCE(inventory_id, 'N/A') AS inventory_id
         FROM purchase_order_item
         WHERE product_code = #{productCode}
             LIMIT 1
     </select>
+
 
     <!-- 가장 최근의 재고번호 조회 -->
     <select id="findLastInventoryId" resultType="String">

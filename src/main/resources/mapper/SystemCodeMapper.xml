@@ -12,13 +12,16 @@
             code_index AS codeIndex,
             code_value AS codeValue,
             code_name AS codeName,
-            active AS active,
+            is_active AS isActive,
             registered_by AS registeredBy,
             registered_date AS registeredDate,
             modified_by AS modifiedBy,
             last_modified AS lastModified
         FROM systemcode
-        ORDER BY registered_date DESC
+        ORDER BY
+            code_index ASC,   -- 색인 코드별 그룹화
+            CAST(code_value AS UNSIGNED) ASC,  -- 숫자 값 기준 정렬
+            code_value ASC  -- 숫자가 아닌 경우 알파벳 순 정렬
     </select>
 
 
@@ -29,8 +32,8 @@
 
     <!-- 코드 추가 -->
     <insert id="addCode" parameterType="com.saehimit.convenienco.dto.SystemCodeDto">
-        INSERT INTO systemcode (code_index, code_value, code_name, active, registered_by, registered_date)
-        VALUES (#{codeIndex}, #{codeValue}, #{codeName}, #{active}, #{registeredBy}, CURRENT_TIMESTAMP);
+        INSERT INTO systemcode (code_index, code_value, code_name, is_active, registered_by, registered_date)
+        VALUES (#{codeIndex}, #{codeValue}, #{codeName}, #{isActive}, #{registeredBy}, CURRENT_TIMESTAMP);
     </insert>
 
 
@@ -42,7 +45,7 @@
             code_Index = #{codeIndex},
             code_value = #{codeValue},
             code_name = #{codeName},
-            active = #{active},
+            is_active = #{isActive},
             modified_by = #{modifiedBy},
             last_modified = #{lastModified}
         WHERE
@@ -83,19 +86,8 @@
         WHERE code_value = #{codeValue} AND code_name = #{codeName}
     </select>
 
-    <select id="checkCodeValueDuplicate" resultType="int">
-        SELECT EXISTS(
-            SELECT 1
-            FROM systemcode
-            WHERE code_value = #{codeValue}
-        )
-    </select>
 
-    <select id="checkCodeNameDuplicate" parameterType="string" resultType="int">
-        SELECT COUNT(*)
-        FROM systemcode
-        WHERE code_name = #{codeName}
-    </select>
+
 
 
 
@@ -116,21 +108,53 @@
         )
     </select>
 
-    <select id="isCodeValueDuplicateExcludeSelf" resultType="boolean">
-        SELECT EXISTS(
-            SELECT 1
-            FROM systemcode
-            WHERE code_value = #{codeValue} AND code_id != #{codeId}
-        )
+
+
+
+
+    <!-- 특정 유형(codeIndex) 내에서 중복된 코드 값(codeValue) 검사 -->
+    <select id="checkCodeValueDuplicateInIndex" resultType="int">
+        SELECT COUNT(*)
+        FROM systemcode
+        WHERE code_value = #{codeValue} AND code_index = #{codeIndex}
     </select>
 
-    <select id="isCodeNameDuplicateExcludeSelf" resultType="boolean">
-        SELECT EXISTS(
-            SELECT 1
-            FROM systemcode
-            WHERE code_name = #{codeName} AND code_id != #{codeId}
-        )
+    <!-- 특정 유형(codeIndex) 내에서 중복된 코드명(codeName) 검사 -->
+    <select id="checkCodeNameDuplicateInIndex" resultType="int">
+        SELECT COUNT(*)
+        FROM systemcode
+        WHERE code_name = #{codeName} AND code_index = #{codeIndex}
     </select>
+
+
+    <!-- 특정 유형(codeIndex) 내에서 자신을 제외한 중복된 코드 값(codeValue) 검사 -->
+    <select id="checkCodeValueDuplicateInIndexExcludeSelf" resultType="int">
+        SELECT COUNT(*)
+        FROM systemcode
+        WHERE code_value = #{codeValue}
+        AND code_index = #{codeIndex}
+        AND code_id != #{codeId}  <!-- 본인의 기존 ID는 제외 -->
+    </select>
+
+    <!-- 특정 유형(codeIndex) 내에서 자신을 제외한 중복된 코드명(codeName) 검사 -->
+    <select id="checkCodeNameDuplicateInIndexExcludeSelf" resultType="int">
+        SELECT COUNT(*)
+        FROM systemcode
+        WHERE code_name = #{codeName}
+        AND code_index = #{codeIndex}
+        AND code_id != #{codeId}  <!-- 본인의 기존 ID는 제외 -->
+    </select>
+
+
+    <select id="getAllCodes" resultType="com.saehimit.convenienco.dto.SystemCodeDto">
+        SELECT code_index, code_value, code_name
+        FROM systemcode
+    </select>
+
+
+
+
+
 
 
 </mapper>

@@ -216,7 +216,8 @@
             <td th:text="${code.codeIndex}"></td>
             <td th:text="${code.codeValue}"></td>
             <td th:text="${code.codeName}"></td>
-            <td th:text="${code.active ? '사용' : '미사용'}"></td>
+            <td th:text="${code.isActive} ? '사용' : '미사용'"></td>
+
             <td th:text="${#temporals.format(code.registeredDate, 'yyyy-MM-dd')}"></td>
             <td th:text="${code.registeredBy}"></td>
             <td th:text="${#temporals.format(code.lastModified, 'yyyy-MM-dd')}"></td>
@@ -264,7 +265,7 @@
 
                 <div class="mb-3">
                         <label for="active" class="form-label">사용 여부</label>
-                        <select id="active" name="active" class="form-select">
+                        <select id="active" name="isActive" class="form-select">
                             <option value="true">사용</option>
                             <option value="false">미사용</option>
                         </select>
@@ -307,11 +308,13 @@
                     </div>
                     <div class="mb-3">
                         <label for="editCodeValue" class="form-label">공통코드</label>
-                        <input type="text" id="editCodeValue" name="codeValue" class="form-control" required>
+                        <input type="text" id="editCodeValue" name="codeValue" class="form-control" required oninput="checkEditCodeValue()">
+                        <div id="editCodeValueMessage" class="text-danger" style="display: none;">이미 사용 중인 공통코드입니다.</div>
                     </div>
                     <div class="mb-3">
                         <label for="editCodeName" class="form-label">공통코드명</label>
-                        <input type="text" id="editCodeName" name="codeName" class="form-control" required>
+                        <input type="text" id="editCodeName" name="codeName" class="form-control" required oninput="checkEditCodeName()">
+                        <div id="editCodeNameMessage" class="text-danger" style="display: none;">이미 사용 중인 공통코드명입니다.</div>
                     </div>
                     <div class="mb-3">
                         <label for="editActive" class="form-label">사용 여부</label>
@@ -363,35 +366,35 @@
 
     function editSelected() {
         const checkboxes = document.querySelectorAll('.rowCheckbox:checked');
-            if (checkboxes.length === 0) {
+        if (checkboxes.length === 0) {
             alert('수정할 항목을 선택해주세요.');
             return;
         }
-            if (checkboxes.length > 1) {
+        if (checkboxes.length > 1) {
             alert('한 번에 하나의 항목만 수정할 수 있습니다.');
             return;
         }
 
-            // 선택된 행의 데이터를 가져옴
-            const selectedRow = checkboxes[0].closest('tr');
-            const code = {
+        // 선택된 행의 데이터를 가져옴
+        const selectedRow = checkboxes[0].closest('tr');
+        const code = {
             codeId: checkboxes[0].value,
             codeIndex: selectedRow.cells[1].textContent.trim(),
             codeValue: selectedRow.cells[2].textContent.trim(),
-            codeName: selectedRow.cells[3].textContent.trim(),f
-            active: selectedRow.cells[4].textContent.trim() === '사용' ? 'true' : 'false'
+            codeName: selectedRow.cells[3].textContent.trim(),
+            isActive: selectedRow.cells[4].textContent.trim() === '사용' ? 'true' : 'false'
         };
 
-            // 수정 모달의 필드에 데이터 설정
-            document.getElementById('editCodeId').value = code.codeId;
-            document.getElementById('editCodeIndex').value = code.codeIndex;
-            document.getElementById('editCodeValue').value = code.codeValue;
-            document.getElementById('editCodeName').value = code.codeName;
-            document.getElementById('editActive').value = code.active;
+        // 수정 모달의 필드에 데이터 설정
+        document.getElementById('editCodeId').value = code.codeId;
+        document.getElementById('editCodeIndex').value = code.codeIndex;
+        document.getElementById('editCodeValue').value = code.codeValue;
+        document.getElementById('editCodeName').value = code.codeName;
+        document.getElementById('editActive').value = code.isActive;
 
-            // 수정 모달 표시
-            const editModal = new bootstrap.Modal(document.getElementById('editCodeModal'));
-            editModal.show();
+        // 수정 모달 표시
+        const editModal = new bootstrap.Modal(document.getElementById('editCodeModal'));
+        editModal.show();
     }
 
     // 공통코드 중복 확인
@@ -440,8 +443,43 @@
             .catch(error => console.error('Error:', error));
     }
 
+    function checkEditCodeValue() {
+        const codeIndex = document.getElementById('editCodeIndex').value;
+        const codeValue = document.getElementById('editCodeValue').value.trim();
+        const codeId = document.getElementById('editCodeId').value;
+        const message = document.getElementById('editCodeValueMessage');
 
+        if (!codeValue) {
+            message.style.display = "none";
+            return;
+        }
 
+        fetch(`/system_management/check-duplicate-code?codeIndex=${encodeURIComponent(codeIndex)}&codeValue=${encodeURIComponent(codeValue)}&codeId=${codeId}`)
+            .then(response => response.json())
+            .then(isDuplicate => {
+                message.style.display = isDuplicate ? "block" : "none";
+            })
+            .catch(error => console.error('Error:', error));
+    }
+
+    function checkEditCodeName() {
+        const codeIndex = document.getElementById('editCodeIndex').value;
+        const codeName = document.getElementById('editCodeName').value.trim();
+        const codeId = document.getElementById('editCodeId').value;
+        const message = document.getElementById('editCodeNameMessage');
+
+        if (!codeName) {
+            message.style.display = "none";
+            return;
+        }
+
+        fetch(`/system_management/check-duplicate-name?codeIndex=${encodeURIComponent(codeIndex)}&codeName=${encodeURIComponent(codeName)}&codeId=${codeId}`)
+            .then(response => response.json())
+            .then(isDuplicate => {
+                message.style.display = isDuplicate ? "block" : "none";
+            })
+            .catch(error => console.error('Error:', error));
+    }
 </script>
 
 

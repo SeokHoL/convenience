@@ -22,12 +22,25 @@ public class PurchaseOrderService {
     private final PurchaseOrderItemMapper purchaseOrderItemMapper;
     private final UserService userService;
     private final InventoryService inventoryService;
+    private final SystemCodeService systemCodeService;
 
     public List<PurchaseOrderDto> searchPurchaseOrders(String branch, String orderId, String requesterName) {
-        System.out.println("🔍 검색 실행 - branch: " + branch + ", orderId: " + orderId + ", requesterName: " + requesterName);
+        System.out.println("검색 실행 - branch: " + branch + ", orderId: " + orderId + ", requesterName: " + requesterName);
 
         List<PurchaseOrderDto> results = purchaseOrderMapper.searchPurchaseOrders(branch, orderId, requesterName);
-        System.out.println("🔎 검색된 데이터 개수: " + results.size());
+
+        // 검색 결과에도 상태 변환 적용
+        Map<String, Map<String, String>> commonCodeMap = systemCodeService.getCommonCodeMap();
+        Map<String, String> purchaseStatusMap = commonCodeMap.get("발주상태");
+
+        for (PurchaseOrderDto order : results) {
+            if (order != null) {
+                String statusCode = order.getStatus();
+                if (purchaseStatusMap != null && purchaseStatusMap.containsKey(statusCode)) {
+                    order.setStatus(purchaseStatusMap.get(statusCode)); // C -> 승인대기
+                }
+            }
+        }
 
         return results;
     }
@@ -51,20 +64,22 @@ public class PurchaseOrderService {
 
         return "PO" + datePart + "-" + nextOrderNumber;
     }
+
     @Transactional
     public String createNewOrder(String branch, String requesterId, String requesterName) {
         PurchaseOrderDto newOrder = new PurchaseOrderDto();
-        newOrder.setOrderId(generateOrderId()); // 발주번호 생성
+        newOrder.setOrderId(generateOrderId());
         newOrder.setBranch(branch);
         newOrder.setRequesterId(requesterId);
         newOrder.setRequesterName(requesterName);
-        newOrder.setStatus("미승인");
+
+        // 발주 상태를 공통 코드에서 가져와 설정
+        newOrder.setStatus(purchaseOrderMapper.getStatusCodeByName("승인대기"));
 
         purchaseOrderMapper.insertPurchaseOrder(newOrder);
-        System.out.println(" 생성된 발주번호: " + newOrder.getOrderId());
-
         return newOrder.getOrderId();
     }
+
 
     @Transactional
     public void addPurchaseOrder(PurchaseOrderDto orderDto) {
@@ -73,7 +88,9 @@ public class PurchaseOrderService {
         }
 
         if (orderDto.getStatus() == null || orderDto.getStatus().isEmpty()) {
-            orderDto.setStatus("미승인");
+            // 공통 코드에서 '승인대기' 상태의 코드 값(C)을 가져옴
+            String pendingApprovalCode = purchaseOrderMapper.getStatusCodeByName("승인대기");
+            orderDto.setStatus(pendingApprovalCode);
         }
 
         if (orderDto.getBranch() == null || orderDto.getBranch().isEmpty()) {
@@ -89,7 +106,7 @@ public class PurchaseOrderService {
             for (PurchaseOrderItemDto item : orderDto.getItems()) {
                 item.setOrderId(orderDto.getOrderId());
 
-                //  품목별 재고번호 자동 생성 (orderId를 전달하도록 수정)
+                // 품목별 재고번호 자동 생성
                 String inventoryId = inventoryService.generateInventoryId(orderDto.getOrderId());
                 item.setInventoryId(inventoryId);
 
@@ -118,7 +135,10 @@ public class PurchaseOrderService {
         LocalDateTime now = LocalDateTime.now();
 
         for (PurchaseOrderItemDto item : items) {
-            purchaseOrderItemMapper.updatePurchaseOrderItem(item);
+            if (item.getMaxOrder() == null || item.getMaxOrder() == 0) {
+                item.setMaxOrder(20); // 기본값 20 설정
+            }
+            purchaseOrderItemMapper.updatePurchaseOrderItem(item); //
         }
 
         purchaseOrderMapper.updatePurchaseOrderHeader(orderId, modifiedBy);

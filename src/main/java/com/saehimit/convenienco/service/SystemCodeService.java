@@ -8,6 +8,8 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 public class SystemCodeService {
@@ -29,19 +31,6 @@ public class SystemCodeService {
 
 
 
-    public void updateCode(SystemCodeDto systemCodeDto) {
-        // 현재 사용자 정보 설정
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String currentUsername = authentication.getName();
-
-        // 수정 날짜와 수정자 설정
-        systemCodeDto.setModifiedBy(currentUsername);  // 수정자 설정
-        systemCodeDto.setLastModified(LocalDate.now()); // 현재 날짜 설정
-
-        mapper.updateCode(systemCodeDto); // Mapper 호출
-    }
-
-
     public List<SystemCodeDto> searchCodes(String codeIndex, String codeValue, String codeName) {
         return mapper.searchCodes(codeIndex, codeValue, codeName);
     }
@@ -51,14 +40,13 @@ public class SystemCodeService {
         mapper.deleteCode(codeIds);
     }
 
-    public boolean isCodeValueDuplicate(String codeValue) {
-        Integer count = mapper.checkCodeValueDuplicate(codeValue);
+    public boolean isCodeValueDuplicateInIndex(String codeIndex, String codeValue) {
+        Integer count = mapper.checkCodeValueDuplicateInIndex(codeIndex, codeValue);
         return count != null && count > 0;
     }
 
-
-    public boolean isCodeNameDuplicate(String codeName) {
-        Integer count = mapper.checkCodeNameDuplicate(codeName);
+    public boolean isCodeNameDuplicateInIndex(String codeIndex, String codeName) {
+        Integer count = mapper.checkCodeNameDuplicateInIndex(codeIndex, codeName);
         return count != null && count > 0;
     }
 
@@ -66,34 +54,54 @@ public class SystemCodeService {
         mapper.addCode(systemCodeDto);
     }
 
+
     public void addCodeWithValidation(SystemCodeDto systemCodeDto) {
-        if (isCodeValueDuplicate(systemCodeDto.getCodeValue())) { //true 일때만 실행
-            throw new IllegalArgumentException("중복된 공통코드가 존재합니다.");
+        if (isCodeValueDuplicateInIndex(systemCodeDto.getCodeIndex(), systemCodeDto.getCodeValue())) {
+            throw new IllegalArgumentException("같은 유형 내에서 중복된 공통코드가 존재합니다.");
         }
-        if (isCodeNameDuplicate(systemCodeDto.getCodeName())) {  //true 일때만 실행
-            throw new IllegalArgumentException("중복된 공통코드명이 존재합니다.");
+        if (isCodeNameDuplicateInIndex(systemCodeDto.getCodeIndex(), systemCodeDto.getCodeName())) {
+            throw new IllegalArgumentException("같은 유형 내에서 중복된 공통코드명이 존재합니다.");
         }
-        mapper.addCode(systemCodeDto); // 중복 확인 후 추가
+        mapper.addCode(systemCodeDto);
     }
+    public boolean isCodeValueDuplicateInIndexExcludeSelf(String codeIndex, String codeValue, int codeId) {
+        Integer count = mapper.checkCodeValueDuplicateInIndexExcludeSelf(codeIndex, codeValue, codeId);
+        return count != null && count > 0;
+    }
+
+    public boolean isCodeNameDuplicateInIndexExcludeSelf(String codeIndex, String codeName, int codeId) {
+        Integer count = mapper.checkCodeNameDuplicateInIndexExcludeSelf(codeIndex, codeName, codeId);
+        return count != null && count > 0;
+    }
+
     public void updateCodeWithValidation(SystemCodeDto systemCodeDto) {
         // 현재 사용자 정보 설정
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String currentUsername = authentication.getName();
-        systemCodeDto.setModifiedBy(currentUsername);  // 수정자 설정
-        systemCodeDto.setLastModified(LocalDate.now()); // 현재 날짜 설정
+        systemCodeDto.setModifiedBy(currentUsername);
+        systemCodeDto.setLastModified(LocalDate.now());
 
-        // 공통코드 중복 확인 (자신 제외)
-        if (mapper.isCodeValueDuplicateExcludeSelf(systemCodeDto.getCodeValue(), systemCodeDto.getCodeId())) {
-            throw new IllegalArgumentException("중복된 공통코드가 존재합니다.");
+        // 자신을 제외한 동일 유형(codeIndex) 내 중복 검사
+        if (isCodeValueDuplicateInIndexExcludeSelf(systemCodeDto.getCodeIndex(), systemCodeDto.getCodeValue(), systemCodeDto.getCodeId())) {
+            throw new IllegalArgumentException("같은 유형 내에서 중복된 공통코드가 존재합니다.");
+        }
+        if (isCodeNameDuplicateInIndexExcludeSelf(systemCodeDto.getCodeIndex(), systemCodeDto.getCodeName(), systemCodeDto.getCodeId())) {
+            throw new IllegalArgumentException("같은 유형 내에서 중복된 공통코드명이 존재합니다.");
         }
 
-        // 공통코드명 중복 확인 (자신 제외)
-        if (mapper.isCodeNameDuplicateExcludeSelf(systemCodeDto.getCodeName(), systemCodeDto.getCodeId())) {
-            throw new IllegalArgumentException("중복된 공통코드명이 존재합니다.");
-        }
-
-        // 중복 확인이 통과되면 업데이트
+        // 중복이 없으면 수정 진행
         mapper.updateCode(systemCodeDto);
+    }
+
+
+    public Map<String, Map<String, String>> getCommonCodeMap() {
+        List<SystemCodeDto> codeList = mapper.getAllCodes();
+
+        return codeList.stream()
+                .collect(Collectors.groupingBy(
+                        SystemCodeDto::getCodeIndex, // 컬럼명 그대로 사용
+                        Collectors.toMap(SystemCodeDto::getCodeValue, SystemCodeDto::getCodeName)
+                ));
     }
 
 

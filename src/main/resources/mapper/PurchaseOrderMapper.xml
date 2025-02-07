@@ -10,9 +10,10 @@
         )
         VALUES (
                    #{orderId}, #{branch}, #{requesterId}, #{requesterName},
-                   IFNULL(#{status}, '미승인'), NOW(), NULL, NULL  -- last_modified를 NULL로 설정
+                   #{status}, NOW(), NULL, NULL
                )
     </insert>
+
 
 
 
@@ -22,9 +23,26 @@
     </select>
 
     <!-- 전체 발주 목록 조회 -->
-    <select id="getAllPurchaseOrders" resultType="com.saehimit.convenienco.dto.PurchaseOrderDto">
-        SELECT * FROM purchase_order ORDER BY registered_date DESC
+    <select id="getAllPurchaseOrders" resultType="PurchaseOrderDto">
+        SELECT
+            po.order_id AS orderId,
+            po.branch AS branch,
+            po.requester_id AS requesterId,
+            po.requester_name AS requesterName,
+            po.status AS codeValue,
+            COALESCE(sc.code_name, '미정') AS status,  -- 공통코드명 가져오기 (NULL 방지)
+            po.registered_date AS registeredDate,
+            po.modified_by AS modifiedBy,
+            po.last_modified AS lastModified
+        FROM purchase_order po
+                 LEFT JOIN systemcode sc
+                           ON po.status = sc.code_value
+                               AND sc.code_index = '발주상태'  -- 공통코드 매핑
+        ORDER BY po.registered_date DESC;
     </select>
+
+
+
 
     <select id="findByOrderId" resultType="com.saehimit.convenienco.dto.PurchaseOrderDto">
         SELECT * FROM purchase_order WHERE order_id = #{orderId}
@@ -80,5 +98,14 @@
             #{orderId}
         </foreach>
     </delete>
+
+    <select id="getStatusCodeByName" resultType="string">
+        SELECT code_value
+        FROM systemcode
+        WHERE code_name = #{codeName} AND code_index = '발주상태'
+    </select>
+
+
+
 
 </mapper>

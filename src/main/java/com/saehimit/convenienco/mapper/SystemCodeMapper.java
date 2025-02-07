@@ -23,11 +23,26 @@ public interface SystemCodeMapper {
 
     void deleteCode(@Param("codeIds") List<Integer> codeIds);
 
-    int checkCodeValueDuplicate(String codeValue);
 
-    int checkCodeNameDuplicate(String codeName);
 
-    boolean isCodeValueDuplicateExcludeSelf(String codeValue, int codeId);
+    int checkCodeValueDuplicateInIndex(@Param("codeIndex") String codeIndex, @Param("codeValue") String codeValue);
 
-    boolean isCodeNameDuplicateExcludeSelf(String codeName, int codeId);
+    int checkCodeNameDuplicateInIndex(@Param("codeIndex") String codeIndex, @Param("codeName") String codeName);
+
+    int checkCodeValueDuplicateInIndexExcludeSelf(
+            @Param("codeIndex") String codeIndex,
+            @Param("codeValue") String codeValue,
+            @Param("codeId") int codeId
+    );
+
+    int checkCodeNameDuplicateInIndexExcludeSelf(
+            @Param("codeIndex") String codeIndex,
+            @Param("codeName") String codeName,
+            @Param("codeId") int codeId
+    );
+
+    List<SystemCodeDto> getCodesByIndex(@Param("codeIndex") String codeIndex);
+
+    List<SystemCodeDto> getAllCodes();
 }
+

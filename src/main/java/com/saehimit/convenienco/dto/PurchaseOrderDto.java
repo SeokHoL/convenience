@@ -15,7 +15,7 @@ public class PurchaseOrderDto {
     private String branch;         // 지점명
     private String requesterId;    // 발주자 ID
     private String requesterName;  // 발주자 이름
-    private String status = "미승인";    // 기본값(미승인으로)
+    private String status ;    // 상태
     private LocalDate registeredDate;   // 등록일자
     private LocalDate lastModified;// 수정일자
     private String modifiedBy;     // 수정자

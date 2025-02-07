@@ -18,7 +18,7 @@ public class PurchaseOrderItemDto {
     private int price;
     private String unit;
     private int minOrder;
-    private int maxOrder;
+    private Integer maxOrder = 20; //최대발주량 하드코딩...
     private int orderQuantity;
     private LocalDate expectedDate;
 }

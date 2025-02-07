@@ -27,4 +27,6 @@ public interface PurchaseOrderMapper {
 
     void deletePurchaseOrder(@Param("orderIds") List<String> orderIds);
 
+    String getStatusCodeByName(@Param("codeName") String codeName);
+
 }

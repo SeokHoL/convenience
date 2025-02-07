@@ -7,6 +7,7 @@ import com.saehimit.convenienco.dto.PurchaseOrderItemDto;
 import com.saehimit.convenienco.dto.UsersDto;
 import com.saehimit.convenienco.service.ProductMasterService;
 import com.saehimit.convenienco.service.PurchaseOrderService;
+import com.saehimit.convenienco.service.SystemCodeService;
 import com.saehimit.convenienco.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -32,12 +33,33 @@ public class PuchaseOrderController {
     private final ProductMasterService productMasterService;
     private final PurchaseOrderService purchaseOrderService;
     private final UserService userService;
+    private final SystemCodeService systemCodeService;
 
+    // 발주 페이지 조회 (기존 showProductMasterPage 삭제)
     @GetMapping
-    public String showProductMasterPage(Model model) {
-        model.addAttribute("products", productMasterService.getAllProducts());
+    public String getPurchaseOrders(Model model) {
+        List<PurchaseOrderDto> purchaseOrders = purchaseOrderService.getAllPurchaseOrders();
+
+        // 공통 코드 맵 가져오기
+        Map<String, Map<String, String>> commonCodeMap = systemCodeService.getCommonCodeMap();
+
+        // 발주상태 맵 (발주 상태 코드 -> 공통 코드명 매핑)
+        Map<String, String> purchaseStatusMap = commonCodeMap.get("발주상태");
+
+        // 상태 코드를 공통 코드명으로 변환
+        for (PurchaseOrderDto order : purchaseOrders) {
+            String statusCode = order.getStatus();
+            if (purchaseStatusMap != null && purchaseStatusMap.containsKey(statusCode)) {
+                order.setStatus(purchaseStatusMap.get(statusCode)); // C -> 승인대기, D -> 취소 등 변환
+            }
+        }
+
+        model.addAttribute("purchaseOrders", purchaseOrders);
+        model.addAttribute("purchaseStatusMap", purchaseStatusMap);
+
         return "purchase_order";
     }
+
 
     //상단바 검색
     @PostMapping("/search")
@@ -47,24 +69,28 @@ public class PuchaseOrderController {
             @RequestParam(required = false) String requesterName,
             Model model) {
 
-        System.out.println("🔍 검색 실행 - branch: " + branch + ", orderId: " + orderId + ", requesterName: " + requesterName);
-//
-//        if (orderId != null) {
-//            System.out.println("orderId 길이: " + orderId.length());
-//            System.out.println("orderId의 HEX 값: " + orderId.chars()
-//                    .mapToObj(c -> String.format("%02X", c))
-//                    .reduce("", (a, b) -> a + " " + b));
-//        }
+        System.out.println("검색 실행 - branch: " + branch + ", orderId: " + orderId + ", requesterName: " + requesterName);
 
         List<PurchaseOrderDto> purchaseOrders = purchaseOrderService.searchPurchaseOrders(branch, orderId, requesterName);
-        System.out.println("검색된 데이터 개수: " + purchaseOrders.size());
+
+        // 공통 코드 변환 로직 추가 (메인 화면과 동일하게 적용)
+        Map<String, Map<String, String>> commonCodeMap = systemCodeService.getCommonCodeMap();
+        Map<String, String> purchaseStatusMap = commonCodeMap.get("발주상태");
+
+        for (PurchaseOrderDto order : purchaseOrders) {
+            if (order != null) { // order가 null인지 확인
+                String statusCode = order.getStatus();
+                if (purchaseStatusMap != null && purchaseStatusMap.containsKey(statusCode)) {
+                    order.setStatus(purchaseStatusMap.get(statusCode)); // C -> 승인대기, D -> 취소 등 변환
+                }
+            }
+        }
 
         model.addAttribute("purchaseOrders", purchaseOrders);
         model.addAttribute("orderId", orderId);
 
         return "purchase_order";
     }
-
 
 
 
@@ -79,14 +105,13 @@ public class PuchaseOrderController {
     @PostMapping("/add")
     public ResponseEntity<Map<String, String>> addPurchaseOrder(
             @RequestBody PurchaseOrderDto orderDto,
-            @AuthenticationPrincipal CustomUserDetails userDetails) { // 🔥 CustomUserDetails로 변경
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
 
-        if (userDetails == null) { // 🔥 방어 코드 추가
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(Map.of("error", "로그인이 필요합니다."));
+        if (userDetails == null) {
+            return ResponseEntity.status(401).body(Map.of("error", "로그인이 필요합니다."));
         }
 
-        String requesterId = userDetails.getLoginId();  // 🔥 여기서 NullPointerException 발생 가능
+        String requesterId = userDetails.getLoginId();
         String requesterName = userDetails.getRealUsername();
         String branch = userService.getBranchByUserId(requesterId);
 
@@ -94,13 +119,10 @@ public class PuchaseOrderController {
         orderDto.setRequesterName(requesterName);
         orderDto.setBranch(branch);
 
-        //발주등록
         purchaseOrderService.addPurchaseOrder(orderDto);
 
         return ResponseEntity.ok(Map.of("message", "발주가 성공적으로 등록되었습니다."));
     }
-
-
 
     @PostMapping("/create")
     public ResponseEntity<Map<String, String>> createNewOrder(@RequestBody Map<String, String> request) {
@@ -118,10 +140,14 @@ public class PuchaseOrderController {
 
     // 특정 발주의 품목 목록 조회 API
     @GetMapping("/items")
-    public ResponseEntity<List<PurchaseOrderItemDto>> getPurchaseOrderItems(@RequestParam String orderId) {
-        List<PurchaseOrderItemDto> items = purchaseOrderService.getPurchaseOrderItems(orderId);
-        return ResponseEntity.ok(items);
+    public ResponseEntity<Map<String, Object>> getOrderItems(@RequestParam String orderId) {
+        List<PurchaseOrderItemDto> orderItems = purchaseOrderService.getPurchaseOrderItems(orderId);
+        Map<String, Map<String, String>> commonCodeMap = systemCodeService.getCommonCodeMap();
+        Map<String, String> itemStatusMap = commonCodeMap.get("발주품목상태");
+
+        return ResponseEntity.ok(Map.of("orderItems", orderItems, "itemStatusMap", itemStatusMap));
     }
+
 
     // 발주 품목 수정 API (발주수량만 변경 가능)
     @PostMapping("/update")
@@ -141,6 +167,9 @@ public class PuchaseOrderController {
         purchaseOrderService.deletePurchaseOrders(orderIds);
         return ResponseEntity.ok(Map.of("message", "선택한 발주가 성공적으로 삭제되었습니다."));
     }
+
+
+
 
 
 

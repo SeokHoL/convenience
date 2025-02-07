@@ -95,16 +95,15 @@ public class SystemCodeController {
     @PostMapping("/update")
     public String updateCode(@ModelAttribute SystemCodeDto systemCodeDto, Model model) {
         try {
-            // 중복 검증 및 업데이트 처리
             systemCodeService.updateCodeWithValidation(systemCodeDto);
         } catch (IllegalArgumentException e) {
-            // 에러 메시지와 기존 데이터를 모델에 설정
             model.addAttribute("error", e.getMessage());
             model.addAttribute("codes", systemCodeService.getAllCodes());
             return "system_management"; // 에러 발생 시 다시 페이지 로드
         }
         return "redirect:/system_management";
     }
+
 
 
 
@@ -115,17 +114,26 @@ public class SystemCodeController {
     }
 
     @GetMapping("/check-duplicate-code")
-    public ResponseEntity<Boolean> checkCodeValueDuplicate(@RequestParam String codeValue) {
-        boolean isDuplicate = systemCodeService.isCodeValueDuplicate(codeValue);
+    public ResponseEntity<Boolean> checkCodeValueDuplicate(
+            @RequestParam String codeIndex,
+            @RequestParam String codeValue,
+            @RequestParam(required = false) Integer codeId) {
+        boolean isDuplicate = (codeId != null) ?
+                systemCodeService.isCodeValueDuplicateInIndexExcludeSelf(codeIndex, codeValue, codeId) :
+                systemCodeService.isCodeValueDuplicateInIndex(codeIndex, codeValue);
         return ResponseEntity.ok(isDuplicate);
     }
 
     @GetMapping("/check-duplicate-name")
-    public ResponseEntity<Boolean> checkCodeNameDuplicate(@RequestParam String codeName) {
-        boolean isDuplicate = systemCodeService.isCodeNameDuplicate(codeName);
+    public ResponseEntity<Boolean> checkCodeNameDuplicate(
+            @RequestParam String codeIndex,
+            @RequestParam String codeName,
+            @RequestParam(required = false) Integer codeId) {
+        boolean isDuplicate = (codeId != null) ?
+                systemCodeService.isCodeNameDuplicateInIndexExcludeSelf(codeIndex, codeName, codeId) :
+                systemCodeService.isCodeNameDuplicateInIndex(codeIndex, codeName);
         return ResponseEntity.ok(isDuplicate);
     }
-
 
 
 }
