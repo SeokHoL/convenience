@@ -159,5 +159,27 @@ public class PurchaseOrderService {
     }
 
 
+    public void updatePurchaseOrderStatus(List<String> orderIds, String statusCode) {
+        System.out.println("전달된 상태 코드 값: " + statusCode);
+
+        // 상태 코드 -> 상태 이름 변환 (새로운 메서드 추가 필요)
+        String statusName = purchaseOrderMapper.getStatusNameByCodeValue(statusCode);
+
+        if (statusName == null) {
+            System.out.println("오류: 상태 이름 조회 실패 - 입력 값: " + statusCode);
+            throw new IllegalArgumentException("잘못된 상태 코드입니다.");
+        }
+
+        System.out.println("상태 코드 변환 성공: " + statusCode + " -> " + statusName);
+        purchaseOrderMapper.updateStatus(orderIds, statusCode);
+    }
+
+
+
+
+    public String getStatusCodeByName(String codeName) {
+        return purchaseOrderMapper.getStatusCodeByName(codeName);
+    }
 
 }
+

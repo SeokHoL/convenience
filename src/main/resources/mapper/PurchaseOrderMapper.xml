@@ -99,11 +99,31 @@
         </foreach>
     </delete>
 
-    <select id="getStatusCodeByName" resultType="string">
+    <select id="getStatusCodeByName" parameterType="string" resultType="string">
         SELECT code_value
         FROM systemcode
-        WHERE code_name = #{codeName} AND code_index = '발주상태'
+        WHERE TRIM(code_name) = TRIM(#{codeName})
+          AND code_index = '발주상태'
     </select>
+
+
+    <update id="updateStatus">
+        UPDATE purchase_order
+        SET status = #{status}
+        WHERE order_id IN
+        <foreach collection="orderIds" item="orderId" open="(" separator="," close=")">
+            #{orderId}
+        </foreach>
+    </update>
+
+
+    <select id="getStatusNameByCodeValue" parameterType="string" resultType="string">
+        SELECT code_name
+        FROM systemcode
+        WHERE TRIM(code_value) = TRIM(#{codeValue})
+          AND code_index = '발주상태'
+    </select>
+
 
 
 

@@ -29,4 +29,8 @@ public interface PurchaseOrderMapper {
 
     String getStatusCodeByName(@Param("codeName") String codeName);
 
+
+    void updateStatus(List<String> orderIds, String status);
+
+    String getStatusNameByCodeValue(String statusCode);
 }

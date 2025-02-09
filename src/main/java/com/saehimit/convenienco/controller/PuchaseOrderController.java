@@ -168,6 +168,26 @@ public class PuchaseOrderController {
         return ResponseEntity.ok(Map.of("message", "선택한 발주가 성공적으로 삭제되었습니다."));
     }
 
+    // status 바꾸기
+    @PostMapping("/status")
+    public ResponseEntity<Map<String, String>> updatePurchaseOrderStatus(@RequestBody Map<String, Object> request) {
+        List<String> orderIds = (List<String>) request.get("orderIds");
+        String statusName = (String) request.get("status");
+
+        if (orderIds == null || orderIds.isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("message", "orderIds가 없습니다."));
+        }
+
+        // 공통 코드에서 상태 코드 조회
+        String statusCode = purchaseOrderService.getStatusCodeByName(statusName);
+        if (statusCode == null) {
+            return ResponseEntity.badRequest().body(Map.of("message", "잘못된 상태 코드입니다."));
+        }
+
+        purchaseOrderService.updatePurchaseOrderStatus(orderIds, statusCode);
+        return ResponseEntity.ok(Map.of("message", "발주 상태가 업데이트되었습니다."));
+    }
+
 
 
 

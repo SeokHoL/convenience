@@ -164,6 +164,12 @@
         <button class="btn btn-warning-custom" onclick="editSelected()">수정</button>
         <button class="btn btn-danger" onclick="deleteSelected()">삭제</button>
     </div>
+    <div class="text-end mb-3">
+        <button class="btn btn-success-custom" onclick="updateOrderStatus('승인')">승인</button>
+        <button class="btn btn-warning-custom" onclick="updateOrderStatus('취소')">취소</button>
+        <button class="btn btn-info" onclick="updateOrderStatus('배송')">배송</button>
+    </div>
+
 
 
     <table class="table table-bordered table-hover mt-4">
@@ -738,7 +744,7 @@
             items: selectedItems
         };
 
-        console.log("📌 서버로 보낼 발주 데이터:", JSON.stringify(orderData, null, 2));
+        console.log("서버로 보낼 발주 데이터:", JSON.stringify(orderData, null, 2));
 
         fetch("/purchase_order/add", {
             method: "POST",
@@ -756,6 +762,45 @@
             })
             .catch(error => console.error("발주 처리 중 오류 발생:", error));
     }
+
+    function updateOrderStatus(newStatus) {
+        // 상태 코드 매핑
+        const statusMapping = {
+            "승인": "승인",
+            "취소": "취소",
+            "배송": "배송"
+        };
+
+        let selectedOrders = Array.from(document.querySelectorAll(".rowCheckbox:checked"))
+            .map(checkbox => checkbox.value);
+
+        if (selectedOrders.length === 0) {
+            alert("상태를 변경할 발주를 선택해주세요.");
+            return;
+        }
+
+        // 상태명을 상태 코드로 변환
+        const mappedStatus = statusMapping[newStatus];
+        if (!mappedStatus) {
+            alert("잘못된 상태 코드입니다.");
+            return;
+        }
+
+        // mappedStatus`를 API 요청에 사용해야 함
+        fetch("/purchase_order/status", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ orderIds: selectedOrders, status: newStatus })  // 상태명을 직접 전송
+        })
+            .then(response => response.json())
+            .then(data => {
+                alert(data.message);
+                location.reload();
+            })
+            .catch(error => console.error("상태 변경 중 오류 발생:", error));
+    }
+
+
 
 </script>
 
